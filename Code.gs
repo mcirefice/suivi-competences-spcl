@@ -51,8 +51,12 @@ function doGet(e) {
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
-function include(filename) {
-  return HtmlService.createHtmlOutputFromFile(filename).getContent();
+function include(filename, data) {
+  const tmpl = HtmlService.createTemplateFromFile(filename);
+  if (data) {
+    Object.keys(data).forEach(function(k) { tmpl[k] = data[k]; });
+  }
+  return tmpl.evaluate().getContent();
 }
 
 function getScriptUrl() {
