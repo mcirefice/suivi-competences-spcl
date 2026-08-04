@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<?!= include('Style.html'); ?>
+<style>
+  .groupe { margin-bottom: 24px; }
+  .groupe h2 { font-size: 13px; font-weight: bold; color: #52514e; letter-spacing: 0.5px; margin: 0 0 10px; text-transform: uppercase; }
+  .carteOutil {
+    display: block; text-decoration: none; color: #0b0b0b;
+  }
+  .carteOutil .lab { font-size: 15px; font-weight: bold; }
+  .carteOutil .fleche { float: right; color: #8a8980; }
+  #vide { color: #52514e; font-size: 14px; text-align: center; padding: 2rem 0; }
+</style>
+</head>
+<body>
+
+<?!= include('Banniere.html', {titre: titre}); ?>
+<?!= include('Nav.html', {scriptUrl: scriptUrl, currentPage: currentPage}); ?>
+
+<div id="zoneGroupes"></div>
+<div id="vide" style="display:none;">Aucun outil disponible pour l'instant.</div>
+
+<script>
+google.script.run.withSuccessHandler(function(modules) {
+  var outils = modules.filter(function(m) { return m.type === "outil"; });
+  var zone = document.getElementById("zoneGroupes");
+  if (outils.length === 0) {
+    document.getElementById("vide").style.display = "block";
+    return;
+  }
+  var chapitres = [];
+  outils.forEach(function(m) { if (chapitres.indexOf(m.chapitre) === -1) chapitres.push(m.chapitre); });
+  chapitres.forEach(function(chapitre) {
+    var groupe = document.createElement("div");
+    groupe.className = "groupe";
+    var titreGroupe = document.createElement("h2");
+    titreGroupe.textContent = chapitre;
+    groupe.appendChild(titreGroupe);
+    outils.filter(function(m) { return m.chapitre === chapitre; }).forEach(function(m) {
+      var a = document.createElement("a");
+      a.className = "carte carteOutil";
+      a.href = "<?= scriptUrl ?>?page=" + m.page;
+      a.innerHTML = '<span class="lab">' + m.label + '</span><span class="fleche">→</span>';
+      groupe.appendChild(a);
+    });
+    zone.appendChild(groupe);
+  });
+}).getModules();
+</script>
+</body>
+</html>

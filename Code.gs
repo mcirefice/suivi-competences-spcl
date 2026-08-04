@@ -15,13 +15,14 @@ const SHEET_CODES = "Codes";
 // 2. Ajouter une ligne ci-dessous : { chapitre: "S&Px", label: "Nom affiché", page: "cle-url", template: "NomDuModule" }
 // L'URL du module devient : <url du déploiement>?page=cle-url
 const MODULES = [
-  { chapitre: "Général",  label: "Auto-évaluation",     page: "competences",       template: "Index" },
-  { chapitre: "Général",  label: "Codes Arduino / Python", page: "codes-source",   template: "CodesSource" },
-  { chapitre: "S&P2",     label: "Étalonnage Pt100",     page: "pt100-etalonnage",  template: "PT100Etalonnage" },
+  { chapitre: "Général",  label: "Auto-évaluation",       page: "competences",       template: "Index",           type: "page" },
+  { chapitre: "Général",  label: "Codes Arduino / Python", page: "codes-source",      template: "CodesSource",     type: "page" },
+  { chapitre: "Général",  label: "Outils",                page: "outils",            template: "Outils",          type: "page" },
+  { chapitre: "S&P2",     label: "Étalonnage Pt100",       page: "pt100-etalonnage",  template: "PT100Etalonnage", type: "outil" },
 ];
 
 function getModules() {
-  return MODULES.map(m => ({ chapitre: m.chapitre, label: m.label, page: m.page }));
+  return MODULES.map(m => ({ chapitre: m.chapitre, label: m.label, page: m.page, type: m.type }));
 }
 
 function getTemplateForPage(page) {
