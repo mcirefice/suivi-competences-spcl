@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 1rem 3rem;
+    background: #fafaf8;
+    color: #0b0b0b;
+  }
+  .banniere {
+    background: #000000;
+    color: #ffffff;
+    padding: 18px 20px;
+    border-radius: 0 0 12px 12px;
+    margin: 0 -1rem 24px;
+  }
+  .banniere .tag { font-size: 12px; font-weight: bold; letter-spacing: 1px; }
+  .banniere h1 { font-size: 20px; margin: 4px 0 0; font-weight: bold; }
+  .barre { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  #recherche {
+    flex: 1; min-width: 180px; height: 38px; border: 1px solid #c3c2b7; border-radius: 6px;
+    padding: 0 12px; font-size: 14px;
+  }
+  .filtreLangage button {
+    height: 38px; padding: 0 14px; border-radius: 6px; border: 1px solid #c3c2b7;
+    background: #fff; font-size: 13px; cursor: pointer;
+  }
+  .filtreLangage button.actif { background: #000; color: #fff; border-color: #000; }
+  .carteCode {
+    background: #ffffff; border: 1px solid #e1e0d9; border-radius: 12px;
+    padding: 1rem 1.25rem; margin-bottom: 14px;
+  }
+  .carteCode .entete { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 6px; }
+  .carteCode .titre { font-size: 15px; font-weight: bold; }
+  .badges { display: flex; gap: 6px; flex-shrink: 0; }
+  .badge { font-size: 11px; font-weight: bold; padding: 3px 8px; border-radius: 4px; border: 1px solid #c3c2b7; color: #52514e; white-space: nowrap; }
+  .badge.langage { background: #efeee7; }
+  .description { font-size: 13px; color: #52514e; margin-bottom: 10px; }
+  pre.code {
+    background: #f2f2f2; border-radius: 6px; padding: 12px; overflow-x: auto;
+    font-family: "Courier New", monospace; font-size: 13px; line-height: 1.5; margin: 0 0 10px;
+    white-space: pre;
+  }
+  .btnCopier {
+    height: 32px; padding: 0 14px; border-radius: 6px; border: 1px solid #888780;
+    background: #fff; font-size: 13px; cursor: pointer;
+  }
+  .btnCopier:hover { background: #f1efe8; }
+  .btnCopier.copie { background: #0f6e56; color: #fff; border-color: #0f6e56; }
+  #vide { color: #52514e; font-size: 14px; text-align: center; padding: 2rem 0; }
+</style>
+</head>
+<body>
+
+<div class="banniere">
+  <div class="tag">SPCL &middot; SYSTÈMES ET PROCÉDÉS</div>
+  <h1>Codes Arduino / Python de l'année</h1>
+</div>
+
+<?!= include('Nav.html'); ?>
+
+<div class="barre">
+  <input type="text" id="recherche" placeholder="Rechercher un titre ou une description...">
+  <div class="filtreLangage" id="filtreLangage">
+    <button data-langage="Tous" class="actif">Tous</button>
+    <button data-langage="Arduino">Arduino</button>
+    <button data-langage="Python">Python</button>
+  </div>
+</div>
+
+<div id="liste"></div>
+<div id="vide" style="display:none;">Aucun code ne correspond à ta recherche.</div>
+
+<script>
+var tousLesCodes = [];
+var langageActif = "Tous";
+
+google.script.run.withSuccessHandler(function(codes) {
+  tousLesCodes = codes;
+  afficher();
+}).getCodes();
+
+document.getElementById("recherche").addEventListener("input", afficher);
+document.querySelectorAll("#filtreLangage button").forEach(function(btn) {
+  btn.addEventListener("click", function() {
+    langageActif = btn.getAttribute("data-langage");
+    document.querySelectorAll("#filtreLangage button").forEach(function(b) { b.className = ""; });
+    btn.className = "actif";
+    afficher();
+  });
+});
+
+function afficher() {
+  var recherche = document.getElementById("recherche").value.trim().toLowerCase();
+  var filtres = tousLesCodes.filter(function(c) {
+    var okLangage = (langageActif === "Tous" || c.langage === langageActif);
+    var okRecherche = !recherche ||
+      c.titre.toLowerCase().indexOf(recherche) !== -1 ||
+      (c.description || "").toLowerCase().indexOf(recherche) !== -1 ||
+      c.chapitre.toLowerCase().indexOf(recherche) !== -1;
+    return okLangage && okRecherche;
+  });
+  var liste = document.getElementById("liste");
+  var vide = document.getElementById("vide");
+  liste.innerHTML = "";
+  if (filtres.length === 0) {
+    vide.style.display = "block";
+    return;
+  }
+  vide.style.display = "none";
+  filtres.forEach(function(c) {
+    var carte = document.createElement("div");
+    carte.className = "carteCode";
+    var entete = document.createElement("div");
+    entete.className = "entete";
+    entete.innerHTML =
+      '<div class="titre">' + escapeHtml(c.titre) + '</div>' +
+      '<div class="badges">' +
+        '<span class="badge">' + escapeHtml(c.chapitre) + '</span>' +
+        '<span class="badge langage">' + escapeHtml(c.langage) + '</span>' +
+      '</div>';
+    carte.appendChild(entete);
+    if (c.description) {
+      var desc = document.createElement("div");
+      desc.className = "description";
+      desc.textContent = c.description;
+      carte.appendChild(desc);
+    }
+    var pre = document.createElement("pre");
+    pre.className = "code";
+    pre.textContent = c.code;
+    carte.appendChild(pre);
+    var btn = document.createElement("button");
+    btn.className = "btnCopier";
+    btn.textContent = "Copier le code";
+    btn.addEventListener("click", function() {
+      navigator.clipboard.writeText(c.code).then(function() {
+        btn.textContent = "Copié !";
+        btn.classList.add("copie");
+        setTimeout(function() { btn.textContent = "Copier le code"; btn.classList.remove("copie"); }, 1500);
+      });
+    });
+    carte.appendChild(btn);
+    liste.appendChild(carte);
+  });
+}
+
+function escapeHtml(s) {
+  var d = document.createElement("div");
+  d.textContent = s;
+  return d.innerHTML;
+}
+</script>
+</body>
+</html>

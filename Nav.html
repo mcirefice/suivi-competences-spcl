@@ -1,0 +1,53 @@
+<style>
+  .navChapitres { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+  .navChapitres button {
+    font-size: 12px; font-weight: bold; color: #52514e; background: #efeee7;
+    border: 1px solid #dcdbd2; border-radius: 6px; padding: 6px 12px; cursor: pointer;
+  }
+  .navChapitres button.actif { background: #000; color: #fff; border-color: #000; }
+  .navModules { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .navModules a {
+    font-size: 13px; color: #0b0b0b; text-decoration: none;
+    border: 1px solid #c3c2b7; border-radius: 6px; padding: 6px 12px;
+  }
+  .navModules a.actif { background: #eeedfe; border-color: #7f77dd; font-weight: bold; }
+</style>
+<div class="navChapitres" id="navChapitres"></div>
+<div class="navModules" id="navModules"></div>
+<script>
+(function() {
+  var scriptUrl = "<?= scriptUrl ?>";
+  var currentPage = "<?= currentPage ?>";
+  google.script.run.withSuccessHandler(function(modules) {
+    var chapitres = [];
+    modules.forEach(function(m) { if (chapitres.indexOf(m.chapitre) === -1) chapitres.push(m.chapitre); });
+    var chapitreActif = "Général";
+    modules.forEach(function(m) { if (m.page === currentPage) chapitreActif = m.chapitre; });
+
+    var zoneChap = document.getElementById("navChapitres");
+    chapitres.forEach(function(c) {
+      var btn = document.createElement("button");
+      btn.textContent = c;
+      if (c === chapitreActif) btn.className = "actif";
+      btn.addEventListener("click", function() { afficherModules(c); });
+      zoneChap.appendChild(btn);
+    });
+
+    function afficherModules(chapitre) {
+      document.querySelectorAll("#navChapitres button").forEach(function(b) {
+        b.className = (b.textContent === chapitre) ? "actif" : "";
+      });
+      var zoneMod = document.getElementById("navModules");
+      zoneMod.innerHTML = "";
+      modules.filter(function(m) { return m.chapitre === chapitre; }).forEach(function(m) {
+        var a = document.createElement("a");
+        a.href = scriptUrl + "?page=" + m.page;
+        a.textContent = m.label;
+        if (m.page === currentPage) a.className = "actif";
+        zoneMod.appendChild(a);
+      });
+    }
+    afficherModules(chapitreActif);
+  }).getModules();
+})();
+</script>

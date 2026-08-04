@@ -7,15 +7,27 @@
 const SHEET_ELEVES = "Élèves";
 const SHEET_REFERENTIEL = "Référentiel";
 const SHEET_REPONSES = "Réponses";
+const SHEET_CODES = "Codes";
 
-// Liste des pages disponibles. Pour ajouter un nouveau module :
+// Liste des pages disponibles, organisées par chapitre pour la navigation.
+// Pour ajouter un nouveau module :
 // 1. Créer le fichier NomDuModule.html
-// 2. Ajouter "nomdumodule": "NomDuModule" ci-dessous
-// L'URL du module devient alors : <url du déploiement>?page=nomdumodule
-const PAGES = {
-  "competences": "Index",
-  "pt100-etalonnage": "PT100Etalonnage",
-};
+// 2. Ajouter une ligne ci-dessous : { chapitre: "S&Px", label: "Nom affiché", page: "cle-url", template: "NomDuModule" }
+// L'URL du module devient : <url du déploiement>?page=cle-url
+const MODULES = [
+  { chapitre: "Général",  label: "Auto-évaluation",     page: "competences",       template: "Index" },
+  { chapitre: "Général",  label: "Codes Arduino / Python", page: "codes-source",   template: "CodesSource" },
+  { chapitre: "S&P2",     label: "Étalonnage Pt100",     page: "pt100-etalonnage",  template: "PT100Etalonnage" },
+];
+
+function getModules() {
+  return MODULES.map(m => ({ chapitre: m.chapitre, label: m.label, page: m.page }));
+}
+
+function getTemplateForPage(page) {
+  const found = MODULES.find(m => m.page === page);
+  return found ? found.template : "Index";
+}
 
 function onOpen() {
   SpreadsheetApp.getUi()
@@ -23,14 +35,16 @@ function onOpen() {
     .addItem("Générer les codes élèves manquants", "genererCodesEleves")
     .addItem("Réinitialiser tous les codes (nouvelle année)", "reinitialiserCodes")
     .addItem("Initialiser le référentiel (S&P1 + S&P2)", "seedReferentiel")
+    .addItem("Initialiser la bibliothèque de codes (S&P1 + S&P2)", "seedCodes")
     .addToUi();
 }
 
 function doGet(e) {
   const page = (e && e.parameter && e.parameter.page) || "competences";
-  const template = PAGES[page] || "Index";
+  const template = getTemplateForPage(page);
   const tpl = HtmlService.createTemplateFromFile(template);
   tpl.scriptUrl = ScriptApp.getService().getUrl();
+  tpl.currentPage = page;
   return tpl.evaluate()
     .setTitle("Suivi SPCL")
     .addMetaTag("viewport", "width=device-width, initial-scale=1")
@@ -85,6 +99,7 @@ function getSheet(name) {
     if (name === SHEET_ELEVES) sh.appendRow(["Nom", "Prénom", "Code"]);
     if (name === SHEET_REFERENTIEL) sh.appendRow(["Chapitre", "Activité", "Code compétence", "Intitulé"]);
     if (name === SHEET_REPONSES) sh.appendRow(["Horodatage", "Code", "Nom complet", "Chapitre", "Activité", "Code compétence", "Intitulé", "Niveau"]);
+    if (name === SHEET_CODES) sh.appendRow(["Chapitre", "Langage", "Titre", "Description", "Code"]);
   }
   return sh;
 }
@@ -115,7 +130,41 @@ function seedReferentiel() {
   SpreadsheetApp.getUi().alert("Référentiel initialisé (" + rows.length + " compétences).");
 }
 
-// ---------- Fonctions appelées depuis les pages web ----------
+function getCodes() {
+  const data = getSheet(SHEET_CODES).getDataRange().getValues();
+  return data.slice(1).filter(r => r[2]).map(r => ({
+    chapitre: r[0], langage: r[1], titre: r[2], description: r[3], code: r[4],
+  }));
+}
+
+function seedCodes() {
+  const sh = getSheet(SHEET_CODES);
+  const rows = [
+    ["S&P1", "Arduino", "Mini-défi 1 — Clignoter une LED",
+     "Fait clignoter la LED de la broche 13 toutes les 500 ms.",
+     "void setup() {\n  pinMode(13, OUTPUT);\n}\n\nvoid loop() {\n  digitalWrite(13, HIGH);\n  delay(500);\n  digitalWrite(13, LOW);\n  delay(500);\n}"],
+    ["S&P1", "Arduino", "Mini-défi 2 — Lire un bouton-poussoir",
+     "Allume la LED (broche 13) quand le bouton (broche 2) est appuyé.",
+     "void setup() {\n  pinMode(13, OUTPUT);\n  pinMode(2, INPUT);\n}\n\nvoid loop() {\n  int etat = digitalRead(2);\n  if (etat == HIGH) {\n    digitalWrite(13, HIGH);\n  } else {\n    digitalWrite(13, LOW);\n  }\n}"],
+    ["S&P1", "Arduino", "Mini-défi 3 — Compteur sur le moniteur série",
+     "Affiche un compteur qui s'incrémente toutes les secondes.",
+     "int compteur = 0;\n\nvoid setup() {\n  Serial.begin(9600);\n}\n\nvoid loop() {\n  Serial.print(\"Compteur : \");\n  Serial.println(compteur);\n  compteur = compteur + 1;\n  delay(1000);\n}"],
+    ["S&P1", "Arduino", "Mini-défi 4 — Lire un potentiomètre",
+     "Affiche en continu la valeur lue sur l'entrée analogique A0 (0 à 1023).",
+     "void setup() {\n  Serial.begin(9600);\n}\n\nvoid loop() {\n  int valeur = analogRead(A0);\n  Serial.println(valeur);\n  delay(200);\n}"],
+    ["S&P1", "Arduino", "AE02 — Comparaison 10/8/6/4 bits",
+     "Compare la résolution du CAN réel (10 bits) à des résolutions simulées plus faibles, à afficher dans le traceur série.",
+     "void setup() {\n  Serial.begin(9600);\n}\n\nvoid loop() {\n  int brut = analogRead(A0);\n\n  int simule8bits = (brut >> 2) << 2;\n  int simule6bits = (brut >> 4) << 4;\n  int simule4bits = (brut >> 6) << 6;\n\n  Serial.print(brut);\n  Serial.print(\"\\t\");\n  Serial.print(simule8bits);\n  Serial.print(\"\\t\");\n  Serial.print(simule6bits);\n  Serial.print(\"\\t\");\n  Serial.println(simule4bits);\n}"],
+    ["S&P2", "Arduino", "Exercice 4 — Voltmètre avec pont diviseur",
+     "Affiche sur le moniteur série la tension mesurée en A0, convertie en volts.",
+     "const int brochePont = A0;\n\nvoid setup() {\n  Serial.begin(9600);\n}\n\nvoid loop() {\n  int valeurBrute = analogRead(brochePont);\n  float tension = valeurBrute * 5.0 / 1023.0;\n\n  Serial.print(\"Tension : \");\n  Serial.print(tension);\n  Serial.println(\" V\");\n\n  delay(500);\n}"],
+  ];
+  const existing = sh.getDataRange().getValues().slice(1).map(r => r[2]);
+  rows.forEach(r => {
+    if (!existing.includes(r[2])) sh.appendRow(r);
+  });
+  SpreadsheetApp.getUi().alert(rows.length + " code(s) initialisé(s) dans l'onglet Codes.");
+}
 
 function verifierCode(code) {
   const data = getSheet(SHEET_ELEVES).getDataRange().getValues();

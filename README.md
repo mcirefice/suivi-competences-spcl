@@ -69,6 +69,8 @@ Le module est alors accessible via `<url du déploiement>?page=nouvel-outil`, et
 | `Code.gs` | Backend : routage des pages, gestion élèves/codes, lecture/écriture du Sheet |
 | `Index.html` | Page d'auto-évaluation des compétences |
 | `PT100Etalonnage.html` | Module : faisceau de droites pour l'étalonnage Pt100 (S&P2) |
+| `CodesSource.html` | Module : bibliothèque de codes Arduino/Python, recherche + copie en un clic |
+| `Nav.html` | Fragment de navigation partagé (onglets par chapitre), inclus dans chaque page |
 
 ## Base de données (le Google Sheet)
 
@@ -76,3 +78,4 @@ Le module est alors accessible via `<url du déploiement>?page=nouvel-outil`, et
 - **Référentiel** : Chapitre, Activité, Code compétence, Intitulé — à compléter au fil des chapitres.
 - **Réponses** : rempli automatiquement à chaque auto-évaluation.
 - **Réponses_Outils** : rempli automatiquement par les modules type "outil" (ex. Pt100), au format horodatage / code / outil / données JSON.
+- **Codes** : Chapitre, Langage (Arduino/Python), Titre, Description, Code — bibliothèque de codes affichée dans le module *Codes Arduino / Python*. **Tu peux ajouter une ligne directement dans cet onglet, aucun besoin de repasser par GitHub/clasp** — le module la récupère automatiquement à chaque ouverture. Pour le remplissage initial (S&P1 + S&P2), utilise le menu **Suivi SPCL → Initialiser la bibliothèque de codes**.
