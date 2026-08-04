@@ -21,6 +21,31 @@
   #msg.erreur { color: #a32d2d; }
   #msg.succes { color: #0f6e56; }
   .hidden { display: none; }
+  button.onglet { background: #efeee7; border-color: #dcdbd2; color: #52514e; font-size: 13px; height: 38px; }
+  button.onglet.actif { background: #000; color: #fff; border-color: #000; }
+  .suiviChapitre { margin-bottom: 18px; }
+  .suiviChapitre h3 { font-size: 13px; font-weight: bold; color: #52514e; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 8px; }
+  .suiviLigne { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid #e1e0d9; }
+  .suiviLigne .intitule { font-size: 13px; flex: 1; }
+  .suiviNiveau {
+    width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: bold; border: 1px solid #c3c2b7; flex-shrink: 0;
+  }
+  .suiviNiveau.A { background: #fff; color: #0b0b0b; }
+  .suiviNiveau.B { background: #e5e4dc; color: #0b0b0b; }
+  .suiviNiveau.C { background: #a8a79c; color: #fff; border-color: #a8a79c; }
+  .suiviNiveau.D { background: #3a3a37; color: #fff; border-color: #3a3a37; }
+  .barreProgression { background: #eeede7; border-radius: 999px; height: 10px; overflow: hidden; margin: 6px 0 4px; }
+  .barreProgression .remplissage { height: 100%; border-radius: 999px; transition: width 0.3s; }
+  .remplissage.rouge { background: #d64545; }
+  .remplissage.orange { background: #e08a2e; }
+  .remplissage.jaune { background: #d8b93a; }
+  .remplissage.vert { background: #3e9b5c; }
+  .progLabel { display: flex; justify-content: space-between; font-size: 12px; color: #52514e; }
+  .btnRefaire {
+    font-size: 12px; height: 30px; padding: 0 12px; margin-left: auto; display: block;
+    background: #efeee7; border-color: #dcdbd2; color: #52514e;
+  }
 </style>
 </head>
 <body>
@@ -38,21 +63,117 @@
 <div id="ecranEval" class="carte hidden">
   <p id="bonjour" style="font-weight:bold;margin-top:0;"></p>
 
-  <label for="chapitreSelect">Chapitre</label>
-  <select id="chapitreSelect" onchange="chargerActivites()"></select>
+  <div style="display:flex;gap:8px;margin-bottom:16px;">
+    <button id="ongletNouvelle" class="onglet actif" onclick="afficherOnglet('nouvelle')" style="flex:1;">Nouvelle auto-évaluation</button>
+    <button id="ongletSuivi" class="onglet" onclick="afficherOnglet('suivi')" style="flex:1;">Mon suivi</button>
+  </div>
 
-  <label for="activiteSelect">Activité</label>
-  <select id="activiteSelect" onchange="chargerCompetences()"></select>
+  <div id="blocNouvelle">
+    <label for="chapitreSelect">Chapitre</label>
+    <select id="chapitreSelect" onchange="chargerActivites()"></select>
 
-  <div id="competencesZone"></div>
+    <label for="activiteSelect">Activité</label>
+    <select id="activiteSelect" onchange="chargerCompetences()"></select>
 
-  <button class="principal" onclick="soumettre()" style="margin-top:16px;">Valider mon auto-évaluation</button>
-  <div id="msgEval"></div>
+    <div id="competencesZone"></div>
+
+    <button class="principal" onclick="soumettre()" style="margin-top:16px;">Valider mon auto-évaluation</button>
+    <div id="msgEval"></div>
+  </div>
+
+  <div id="blocSuivi" class="hidden">
+    <div id="suiviZone"></div>
+  </div>
 </div>
 
 <script>
 var codeActuel = "";
 var competencesActuelles = [];
+var dernierSuivi = null;
+
+function refaireEvaluation(chapitre) {
+  afficherOnglet("nouvelle");
+  var sel = document.getElementById("chapitreSelect");
+  var tentative = function() {
+    if (sel.options.length === 0) { setTimeout(tentative, 100); return; }
+    sel.value = chapitre;
+    chargerActivites();
+  };
+  tentative();
+}
+
+function afficherOnglet(nom) {
+  document.getElementById("ongletNouvelle").className = "onglet" + (nom === "nouvelle" ? " actif" : "");
+  document.getElementById("ongletSuivi").className = "onglet" + (nom === "suivi" ? " actif" : "");
+  document.getElementById("blocNouvelle").className = (nom === "nouvelle") ? "" : "hidden";
+  document.getElementById("blocSuivi").className = (nom === "suivi") ? "" : "hidden";
+  if (nom === "suivi") chargerSuivi();
+}
+
+function chargerSuivi() {
+  var zone = document.getElementById("suiviZone");
+  zone.innerHTML = "Chargement...";
+  google.script.run.withSuccessHandler(function(res) {
+    dernierSuivi = res;
+    if (!res.ok || res.resultats.length === 0) {
+      zone.innerHTML = "<p style='color:#52514e;font-size:14px;'>Pas encore d'auto-évaluation enregistrée.</p>";
+      return;
+    }
+    var parChapitre = {};
+    res.resultats.forEach(function(r) {
+      if (!parChapitre[r.chapitre]) parChapitre[r.chapitre] = [];
+      parChapitre[r.chapitre].push(r);
+    });
+    var progressionParChapitre = {};
+    (res.progression || []).forEach(function(p) { progressionParChapitre[p.chapitre] = p; });
+
+    zone.innerHTML = "";
+    Object.keys(parChapitre).forEach(function(chapitre) {
+      var bloc = document.createElement("div");
+      bloc.className = "suiviChapitre";
+
+      var entete = document.createElement("div");
+      entete.style.display = "flex";
+      entete.style.justifyContent = "space-between";
+      entete.style.alignItems = "center";
+      var titre = document.createElement("h3");
+      titre.textContent = chapitre;
+      titre.style.margin = "0";
+      entete.appendChild(titre);
+      var btnRefaire = document.createElement("button");
+      btnRefaire.className = "btnRefaire";
+      btnRefaire.textContent = "Refaire cette auto-évaluation";
+      btnRefaire.style.marginLeft = "0";
+      btnRefaire.addEventListener("click", function() { refaireEvaluation(chapitre); });
+      entete.appendChild(btnRefaire);
+      bloc.appendChild(entete);
+
+      var p = progressionParChapitre[chapitre];
+      if (p) {
+        var pct = p.pourcentageA;
+        var couleur = pct < 25 ? "rouge" : pct < 50 ? "orange" : pct < 75 ? "jaune" : "vert";
+        var labelDiv = document.createElement("div");
+        labelDiv.className = "progLabel";
+        labelDiv.innerHTML = "<span>" + pct + "% de compétences maîtrisées (niveau A)</span><span>" + p.nbEvalues + "/" + p.nbTotal + " évaluées</span>";
+        var barre = document.createElement("div");
+        barre.className = "barreProgression";
+        barre.innerHTML = '<div class="remplissage ' + couleur + '" style="width:' + pct + '%;"></div>';
+        bloc.appendChild(labelDiv);
+        bloc.appendChild(barre);
+      }
+
+      parChapitre[chapitre].forEach(function(r) {
+        var ligne = document.createElement("div");
+        ligne.className = "suiviLigne";
+        ligne.innerHTML =
+          '<span class="intitule">' + r.intitule + '</span>' +
+          '<span class="suiviNiveau ' + r.niveau + '">' + r.niveau + '</span>';
+        bloc.appendChild(ligne);
+      });
+      zone.appendChild(bloc);
+    });
+  }).getSuiviEleve(codeActuel);
+}
 
 function connecter() {
   var code = document.getElementById("codeInput").value.trim();
@@ -66,6 +187,7 @@ function connecter() {
       document.getElementById("ecranCode").classList.add("hidden");
       document.getElementById("ecranEval").classList.remove("hidden");
       chargerChapitres();
+      google.script.run.withSuccessHandler(function(res) { dernierSuivi = res; }).getSuiviEleve(codeActuel);
     } else {
       msg.textContent = "Code invalide, réessaie.";
       msg.className = "erreur";
@@ -131,6 +253,15 @@ function chargerCompetences() {
         lbl.querySelector("input").checked = true;
       });
     });
+    if (dernierSuivi && dernierSuivi.ok) {
+      competences.forEach(function(c, idx) {
+        var precedent = dernierSuivi.resultats.find(function(r) { return r.code === c.code; });
+        if (precedent) {
+          var lbl = document.querySelector('label[data-idx="' + idx + '"][data-niveau="' + precedent.niveau + '"]');
+          if (lbl) { lbl.classList.add("selected"); lbl.querySelector("input").checked = true; }
+        }
+      });
+    }
   }).getCompetences(chapitre, activite);
 }
 

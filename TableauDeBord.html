@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<?!= include('Style.html'); ?>
+<style>
+  body { max-width: 100%; padding-left: 1rem; padding-right: 1rem; }
+  #contenu { max-width: 1100px; margin: 0 auto; }
+  #ecranMdp { max-width: 400px; margin: 40px auto; }
+  select#chapitreDashboard { max-width: 320px; }
+  .tableauWrap { overflow-x: auto; border: 1px solid #e1e0d9; border-radius: 12px; background: #fff; }
+  table.dashboard { border-collapse: collapse; width: 100%; font-size: 12px; }
+  table.dashboard th, table.dashboard td { padding: 8px 10px; border-bottom: 1px solid #eeede7; text-align: center; white-space: nowrap; }
+  table.dashboard th { background: #f6f5f1; font-size: 11px; color: #52514e; position: sticky; top: 0; }
+  table.dashboard td.nomEleve, table.dashboard th.nomEleve { text-align: left; position: sticky; left: 0; background: #fff; font-weight: bold; z-index: 1; }
+  table.dashboard th.nomEleve { background: #f6f5f1; z-index: 2; }
+  .celluleNiveau { display: inline-flex; width: 24px; height: 24px; border-radius: 5px; align-items: center; justify-content: center; font-weight: bold; border: 1px solid #c3c2b7; }
+  .celluleNiveau.A { background: #fff; }
+  .celluleNiveau.B { background: #e5e4dc; }
+  .celluleNiveau.C { background: #a8a79c; color: #fff; border-color: #a8a79c; }
+  .celluleNiveau.D { background: #3a3a37; color: #fff; border-color: #3a3a37; }
+  .celluleNiveau.vide { background: #fafaf8; color: #c3c2b7; border-style: dashed; }
+  #msgMdp { font-size: 13px; margin-top: 8px; }
+  #msgMdp.erreur { color: #a32d2d; }
+  .resumeClasse { margin-bottom: 20px; }
+  .ligneResume { display: flex; align-items: center; gap: 12px; padding: 6px 0; }
+  .ligneResume .nom { width: 160px; font-size: 13px; font-weight: bold; flex-shrink: 0; }
+  .ligneResume .barreProgression { flex: 1; background: #eeede7; border-radius: 999px; height: 10px; overflow: hidden; }
+  .ligneResume .remplissage { height: 100%; border-radius: 999px; }
+  .remplissage.rouge { background: #d64545; }
+  .remplissage.orange { background: #e08a2e; }
+  .remplissage.jaune { background: #d8b93a; }
+  .remplissage.vert { background: #3e9b5c; }
+  .ligneResume .pct { width: 40px; text-align: right; font-size: 12px; color: #52514e; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<?!= include('Banniere.html', {titre: titre}); ?>
+<?!= include('Nav.html', {scriptUrl: scriptUrl, currentPage: currentPage}); ?>
+
+<div id="ecranMdp" class="carte">
+  <label for="mdpInput">Mot de passe enseignant</label>
+  <input type="text" id="mdpInput" placeholder="•••••">
+  <button class="principal" onclick="connecterProf()">Afficher le tableau de bord</button>
+  <div id="msgMdp"></div>
+  <p style="font-size:12px;color:#8a8980;margin-top:14px;">Première utilisation : le mot de passe que tu saisis devient le mot de passe permanent du tableau de bord.</p>
+</div>
+
+<div id="contenu" class="hidden">
+  <div style="margin-bottom:16px;">
+    <label for="chapitreDashboard">Chapitre</label>
+    <select id="chapitreDashboard" onchange="afficherTableau()"></select>
+  </div>
+  <div class="carte resumeClasse">
+    <div id="resumeZone"></div>
+  </div>
+  <div class="tableauWrap">
+    <table class="dashboard" id="tableauDashboard"></table>
+  </div>
+</div>
+
+<script>
+var donneesDashboard = null;
+
+function connecterProf() {
+  var mdp = document.getElementById("mdpInput").value;
+  var msg = document.getElementById("msgMdp");
+  if (!mdp) { msg.textContent = "Entre un mot de passe."; msg.className = "erreur"; return; }
+  msg.textContent = "Vérification...";
+  msg.className = "";
+  google.script.run.withSuccessHandler(function(res) {
+    if (!res.ok) {
+      msg.textContent = res.message || "Erreur.";
+      msg.className = "erreur";
+      return;
+    }
+    donneesDashboard = res;
+    document.getElementById("ecranMdp").classList.add("hidden");
+    document.getElementById("contenu").classList.remove("hidden");
+    var sel = document.getElementById("chapitreDashboard");
+    sel.innerHTML = "";
+    res.chapitres.forEach(function(ch) {
+      var opt = document.createElement("option");
+      opt.value = ch; opt.textContent = ch;
+      sel.appendChild(opt);
+    });
+    afficherTableau();
+  }).getTableauDeBord(mdp);
+}
+
+function afficherResume(chapitre, competences) {
+  var zone = document.getElementById("resumeZone");
+  zone.innerHTML = "";
+  if (competences.length === 0) return;
+  donneesDashboard.eleves.forEach(function(e) {
+    var nbA = competences.filter(function(c) { return e.niveaux[c.code] === "A"; }).length;
+    var pct = Math.round((nbA / competences.length) * 100);
+    var couleur = pct < 25 ? "rouge" : pct < 50 ? "orange" : pct < 75 ? "jaune" : "vert";
+    var ligne = document.createElement("div");
+    ligne.className = "ligneResume";
+    ligne.innerHTML =
+      '<span class="nom">' + e.nom + '</span>' +
+      '<span class="barreProgression"><span class="remplissage ' + couleur + '" style="width:' + pct + '%;display:block;"></span></span>' +
+      '<span class="pct">' + pct + '%</span>';
+    zone.appendChild(ligne);
+  });
+}
+
+function afficherTableau() {
+  var chapitre = document.getElementById("chapitreDashboard").value;
+  var competences = donneesDashboard.competencesParChapitre[chapitre] || [];
+
+  afficherResume(chapitre, competences);
+
+  var table = document.getElementById("tableauDashboard");
+  table.innerHTML = "";
+
+  var thead = document.createElement("thead");
+  var trHead = document.createElement("tr");
+  var thNom = document.createElement("th");
+  thNom.className = "nomEleve";
+  thNom.textContent = "Élève";
+  trHead.appendChild(thNom);
+  competences.forEach(function(c) {
+    var th = document.createElement("th");
+    th.textContent = c.code;
+    th.title = c.intitule;
+    trHead.appendChild(th);
+  });
+  thead.appendChild(trHead);
+  table.appendChild(thead);
+
+  var tbody = document.createElement("tbody");
+  donneesDashboard.eleves.forEach(function(e) {
+    var tr = document.createElement("tr");
+    var tdNom = document.createElement("td");
+    tdNom.className = "nomEleve";
+    tdNom.textContent = e.nom;
+    tr.appendChild(tdNom);
+    competences.forEach(function(c) {
+      var td = document.createElement("td");
+      var niveau = e.niveaux[c.code] || "";
+      var span = document.createElement("span");
+      span.className = "celluleNiveau " + (niveau || "vide");
+      span.textContent = niveau || "–";
+      td.appendChild(span);
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+}
+</script>
+</body>
+</html>

@@ -15,10 +15,11 @@ const SHEET_CODES = "Codes";
 // 2. Ajouter une ligne ci-dessous : { chapitre: "S&Px", label: "Nom affiché", page: "cle-url", template: "NomDuModule" }
 // L'URL du module devient : <url du déploiement>?page=cle-url
 const MODULES = [
-  { chapitre: "Général",  label: "Auto-évaluation",       page: "competences",       template: "Index",           type: "page" },
-  { chapitre: "Général",  label: "Codes Arduino / Python", page: "codes-source",      template: "CodesSource",     type: "page" },
-  { chapitre: "Général",  label: "Outils",                page: "outils",            template: "Outils",          type: "page" },
-  { chapitre: "S&P2",     label: "Étalonnage Pt100",       page: "pt100-etalonnage",  template: "PT100Etalonnage", type: "outil" },
+  { chapitre: "Général",  label: "Auto-évaluation",       page: "competences",       template: "Index",            type: "page" },
+  { chapitre: "Général",  label: "Codes Arduino / Python", page: "codes-source",      template: "CodesSource",      type: "page" },
+  { chapitre: "Général",  label: "Outils",                page: "outils",            template: "Outils",           type: "page" },
+  { chapitre: "Général",  label: "Tableau de bord (prof)", page: "tableau-de-bord",   template: "TableauDeBord",    type: "page" },
+  { chapitre: "S&P2",     label: "Étalonnage Pt100",       page: "pt100-etalonnage",  template: "PT100Etalonnage",  type: "outil" },
 ];
 
 function getModules() {
@@ -209,6 +210,102 @@ function soumettreEvaluation(payload) {
     sh.appendRow([now, payload.code, verif.nom, payload.chapitre, payload.activite, item.code, item.intitule, item.niveau]);
   });
   return { ok: true };
+}
+
+// ---------- Suivi élève (historique de ses propres niveaux) ----------
+
+function getSuiviEleve(code) {
+  const verif = verifierCode(code);
+  if (!verif.ok) return { ok: false };
+  const data = getSheet(SHEET_REPONSES).getDataRange().getValues();
+  const rows = data.slice(1).filter(r => String(r[1]) === String(code));
+  const latest = {};
+  rows.forEach(r => {
+    const key = r[3] + "|" + r[5];
+    if (!latest[key] || new Date(r[0]) > new Date(latest[key][0])) {
+      latest[key] = r;
+    }
+  });
+  const resultats = Object.keys(latest).map(k => {
+    const r = latest[k];
+    return { chapitre: r[3], activite: r[4], code: r[5], intitule: r[6], niveau: r[7] };
+  });
+  resultats.sort((a, b) => (a.chapitre + a.code).localeCompare(b.chapitre + b.code));
+
+  // Progression par chapitre : % de compétences au niveau A parmi TOUTES les compétences
+  // du référentiel pour ce chapitre (une compétence pas encore évaluée compte pour 0).
+  const referentiel = getSheet(SHEET_REFERENTIEL).getDataRange().getValues().slice(1).filter(r => r[2]);
+  const chapitres = [];
+  referentiel.forEach(r => { if (chapitres.indexOf(r[0]) === -1) chapitres.push(r[0]); });
+  const progression = chapitres.map(ch => {
+    const total = referentiel.filter(r => r[0] === ch).length;
+    const evalues = resultats.filter(r => r.chapitre === ch);
+    const nbA = evalues.filter(r => r.niveau === "A").length;
+    return {
+      chapitre: ch,
+      pourcentageA: total > 0 ? Math.round((nbA / total) * 100) : 0,
+      nbEvalues: evalues.length,
+      nbTotal: total,
+    };
+  });
+
+  return { ok: true, nom: verif.nom, resultats: resultats, progression: progression };
+}
+
+// ---------- Tableau de bord enseignant (protégé par mot de passe) ----------
+// La toute première saisie de mot de passe le définit de façon permanente (rien à
+// configurer à l'avance). Change-le en effaçant la propriété TEACHER_DASHBOARD_PASSWORD
+// dans Projet > Propriétés du projet > Propriétés du script, si besoin de le réinitialiser.
+
+const TEACHER_PASSWORD_PROP = "TEACHER_DASHBOARD_PASSWORD";
+
+function verifierMotDePasseProf(motDePasse) {
+  if (!motDePasse) return false;
+  const props = PropertiesService.getScriptProperties();
+  const stored = props.getProperty(TEACHER_PASSWORD_PROP);
+  if (!stored) {
+    props.setProperty(TEACHER_PASSWORD_PROP, motDePasse);
+    return true;
+  }
+  return stored === motDePasse;
+}
+
+function getTableauDeBord(motDePasse) {
+  if (!verifierMotDePasseProf(motDePasse)) {
+    return { ok: false, message: "Mot de passe incorrect." };
+  }
+  const eleves = getSheet(SHEET_ELEVES).getDataRange().getValues().slice(1).filter(r => r[0] && r[2]);
+  const referentiel = getSheet(SHEET_REFERENTIEL).getDataRange().getValues().slice(1).filter(r => r[2]);
+  const reponses = getSheet(SHEET_REPONSES).getDataRange().getValues().slice(1);
+
+  const latest = {};
+  reponses.forEach(r => {
+    const key = r[1] + "|" + r[5];
+    if (!latest[key] || new Date(r[0]) > new Date(latest[key].date)) {
+      latest[key] = { date: r[0], niveau: r[7] };
+    }
+  });
+
+  const chapitres = [];
+  referentiel.forEach(r => { if (chapitres.indexOf(r[0]) === -1) chapitres.push(r[0]); });
+
+  const competencesParChapitre = {};
+  chapitres.forEach(ch => {
+    competencesParChapitre[ch] = referentiel.filter(r => r[0] === ch).map(r => ({ code: r[2], intitule: r[3] }));
+  });
+
+  const elevesData = eleves.map(e => {
+    const code = String(e[2]);
+    const nom = e[0] + " " + e[1];
+    const niveaux = {};
+    referentiel.forEach(r => {
+      const key = code + "|" + r[2];
+      niveaux[r[2]] = latest[key] ? latest[key].niveau : "";
+    });
+    return { nom: nom, niveaux: niveaux };
+  });
+
+  return { ok: true, chapitres: chapitres, competencesParChapitre: competencesParChapitre, eleves: elevesData };
 }
 
 // ---------- Enregistrement générique de résultats d'outils (ex. étalonnage Pt100) ----------
