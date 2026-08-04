@@ -4,60 +4,9 @@
 <base target="_top">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<?!= include('Style.html'); ?>
 <style>
-  * { box-sizing: border-box; }
-  body {
-    font-family: Arial, Helvetica, sans-serif;
-    max-width: 720px;
-    margin: 0 auto;
-    padding: 0 1rem 3rem;
-    background: #fafaf8;
-    color: #0b0b0b;
-  }
-  .banniere {
-    background: #000000;
-    color: #ffffff;
-    padding: 18px 20px;
-    border-radius: 0 0 12px 12px;
-    margin: 0 -1rem 24px;
-  }
-  .banniere .tag { font-size: 12px; font-weight: bold; letter-spacing: 1px; }
-  .banniere h1 { font-size: 20px; margin: 4px 0 0; font-weight: bold; }
-  .nav { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
-  .nav a {
-    font-size: 13px; color: #0b0b0b; text-decoration: none;
-    border: 1px solid #c3c2b7; border-radius: 6px; padding: 6px 12px;
-  }
-  .nav a.actif { background: #000; color: #fff; border-color: #000; }
   p.intro { color: #52514e; font-size: 14px; margin-top: 0; margin-bottom: 1.5rem; }
-  #capture {
-    background: #ffffff;
-    border-radius: 12px;
-    border: 1px solid #e1e0d9;
-    padding: 1rem 1.25rem;
-  }
-  input {
-    width: 100%;
-    box-sizing: border-box;
-    height: 32px;
-    border: 1px solid #c3c2b7;
-    border-radius: 6px;
-    padding: 0 8px;
-    font-size: 14px;
-  }
-  button {
-    margin-top: 16px;
-    height: 38px;
-    padding: 0 16px;
-    border-radius: 6px;
-    border: 1px solid #888780;
-    background: #ffffff;
-    cursor: pointer;
-    font-size: 14px;
-  }
-  button:hover { background: #f1efe8; }
-  button.principal { background: #000; color: #fff; border-color: #000; }
-  button.principal:hover { background: #2c2c2a; }
   .grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 6px 12px; align-items: center; margin-bottom: 12px; }
   .grid span.label { font-size: 13px; }
   .grid span.header { font-size: 12px; color: #52514e; }
@@ -72,16 +21,12 @@
 </head>
 <body>
 
-<div class="banniere">
-  <div class="tag">SPCL &middot; SYSTÈMES ET PROCÉDÉS</div>
-  <h1>Étalonnage Pt100 — faisceau de droites</h1>
-</div>
-
+<?!= include('Banniere.html'); ?>
 <?!= include('Nav.html', {scriptUrl: scriptUrl, currentPage: currentPage}); ?>
 
 <p class="intro">Entre tes 5 points de mesure et les incertitudes. Le graphique se met à jour automatiquement. Une fois terminé, tu peux enregistrer tes résultats avec ton code élève.</p>
 
-<div id="capture">
+<div id="capture" class="carte">
 <div class="grid">
 <span></span><span class="header">T (°C)</span><span class="header">U (V)</span>
 <span class="label">Point 1</span><input type="number" id="T0" value="0" step="0.1"><input type="number" id="U0" value="0.22" step="0.01">
@@ -119,17 +64,16 @@
 </div>
 
 <div style="display:flex;gap:10px;flex-wrap:wrap;">
-<button id="exportBtn">Convertir en image</button>
+<button id="exportBtn">Afficher l'image (à enregistrer)</button>
 </div>
 
-<div id="capture2" style="margin-top:20px;">
+<div class="carte" style="margin-top:20px;">
 <label for="codeInput">Ton code (pour enregistrer ces résultats)</label>
 <input type="text" id="codeInput" inputmode="numeric" maxlength="4" placeholder="1234">
 <button id="saveBtn" class="principal">Enregistrer mes résultats</button>
 <div id="msgSave"></div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 var derniersResultats = null;
 
@@ -226,14 +170,23 @@ function draw(){
 }
 document.querySelectorAll('#capture input').forEach(function(el){el.addEventListener('input',draw);});
 draw();
+
 document.getElementById('exportBtn').addEventListener('click',function(){
   html2canvas(document.getElementById('capture')).then(function(canvas){
-    var link=document.createElement('a');
-    link.download='etalonnage_pt100.png';
-    link.href=canvas.toDataURL();
-    link.click();
+    var dataUrl = canvas.toDataURL();
+    var fenetre = window.open();
+    if (fenetre) {
+      fenetre.document.write(
+        '<html><head><title>Etalonnage Pt100</title></head><body style="margin:0;background:#fafaf8;display:flex;align-items:center;justify-content:center;min-height:100vh;">' +
+        '<div style="text-align:center;padding:20px;">' +
+        '<p style="font-family:sans-serif;color:#52514e;font-size:14px;">Reste appuyé sur l\'image puis choisis "Enregistrer l\'image" (iPad/mobile), ou clic droit "Enregistrer sous" (ordinateur).</p>' +
+        '<img src="' + dataUrl + '" style="max-width:100%;border:1px solid #e1e0d9;border-radius:8px;">' +
+        '</div></body></html>'
+      );
+    }
   });
 });
+
 document.getElementById('saveBtn').addEventListener('click',function(){
   var code = document.getElementById('codeInput').value.trim();
   var msg = document.getElementById('msgSave');
@@ -246,5 +199,6 @@ document.getElementById('saveBtn').addEventListener('click',function(){
   }).enregistrerResultatOutil({ code: code, outil: 'pt100-etalonnage', donnees: derniersResultats });
 });
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </body>
 </html>

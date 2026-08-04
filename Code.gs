@@ -42,9 +42,11 @@ function onOpen() {
 function doGet(e) {
   const page = (e && e.parameter && e.parameter.page) || "competences";
   const template = getTemplateForPage(page);
+  const moduleInfo = MODULES.find(m => m.page === page);
   const tpl = HtmlService.createTemplateFromFile(template);
   tpl.scriptUrl = ScriptApp.getService().getUrl();
   tpl.currentPage = page;
+  tpl.titre = moduleInfo ? moduleInfo.label : "Suivi SPCL";
   return tpl.evaluate()
     .setTitle("Suivi SPCL")
     .addMetaTag("viewport", "width=device-width, initial-scale=1")

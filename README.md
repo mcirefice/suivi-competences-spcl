@@ -70,7 +70,9 @@ Le module est alors accessible via `<url du déploiement>?page=nouvel-outil`, et
 | `Index.html` | Page d'auto-évaluation des compétences |
 | `PT100Etalonnage.html` | Module : faisceau de droites pour l'étalonnage Pt100 (S&P2) |
 | `CodesSource.html` | Module : bibliothèque de codes Arduino/Python, recherche + copie en un clic |
-| `Nav.html` | Fragment de navigation partagé (onglets par chapitre), inclus dans chaque page |
+| `Nav.html` | Fragment de navigation partagé (barre horizontale unique), inclus dans chaque page |
+| `Style.html` | Styles CSS partagés (couleurs, fond, boutons...) — modifie ici pour changer le rendu de toutes les pages d'un coup |
+| `Banniere.html` | Bandeau noir avec l'emblème du chapitre, inclus dans chaque page |
 
 ## Base de données (le Google Sheet)
 

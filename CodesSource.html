@@ -4,39 +4,13 @@
 <base target="_top">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<?!= include('Style.html'); ?>
 <style>
-  * { box-sizing: border-box; }
-  body {
-    font-family: Arial, Helvetica, sans-serif;
-    max-width: 760px;
-    margin: 0 auto;
-    padding: 0 1rem 3rem;
-    background: #fafaf8;
-    color: #0b0b0b;
-  }
-  .banniere {
-    background: #000000;
-    color: #ffffff;
-    padding: 18px 20px;
-    border-radius: 0 0 12px 12px;
-    margin: 0 -1rem 24px;
-  }
-  .banniere .tag { font-size: 12px; font-weight: bold; letter-spacing: 1px; }
-  .banniere h1 { font-size: 20px; margin: 4px 0 0; font-weight: bold; }
   .barre { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
-  #recherche {
-    flex: 1; min-width: 180px; height: 38px; border: 1px solid #c3c2b7; border-radius: 6px;
-    padding: 0 12px; font-size: 14px;
-  }
-  .filtreLangage button {
-    height: 38px; padding: 0 14px; border-radius: 6px; border: 1px solid #c3c2b7;
-    background: #fff; font-size: 13px; cursor: pointer;
-  }
+  #recherche { flex: 1; min-width: 180px; margin-bottom: 0; }
+  .filtreLangage { display: flex; gap: 8px; }
+  .filtreLangage button { height: 40px; font-size: 13px; }
   .filtreLangage button.actif { background: #000; color: #fff; border-color: #000; }
-  .carteCode {
-    background: #ffffff; border: 1px solid #e1e0d9; border-radius: 12px;
-    padding: 1rem 1.25rem; margin-bottom: 14px;
-  }
   .carteCode .entete { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 6px; }
   .carteCode .titre { font-size: 15px; font-weight: bold; }
   .badges { display: flex; gap: 6px; flex-shrink: 0; }
@@ -48,22 +22,14 @@
     font-family: "Courier New", monospace; font-size: 13px; line-height: 1.5; margin: 0 0 10px;
     white-space: pre;
   }
-  .btnCopier {
-    height: 32px; padding: 0 14px; border-radius: 6px; border: 1px solid #888780;
-    background: #fff; font-size: 13px; cursor: pointer;
-  }
-  .btnCopier:hover { background: #f1efe8; }
+  .btnCopier { height: 32px; font-size: 13px; }
   .btnCopier.copie { background: #0f6e56; color: #fff; border-color: #0f6e56; }
   #vide { color: #52514e; font-size: 14px; text-align: center; padding: 2rem 0; }
 </style>
 </head>
 <body>
 
-<div class="banniere">
-  <div class="tag">SPCL &middot; SYSTÈMES ET PROCÉDÉS</div>
-  <h1>Codes Arduino / Python de l'année</h1>
-</div>
-
+<?!= include('Banniere.html'); ?>
 <?!= include('Nav.html', {scriptUrl: scriptUrl, currentPage: currentPage}); ?>
 
 <div class="barre">
@@ -117,7 +83,7 @@ function afficher() {
   vide.style.display = "none";
   filtres.forEach(function(c) {
     var carte = document.createElement("div");
-    carte.className = "carteCode";
+    carte.className = "carte carteCode";
     var entete = document.createElement("div");
     entete.className = "entete";
     entete.innerHTML =
