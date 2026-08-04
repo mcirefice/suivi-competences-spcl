@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 0 1rem 3rem;
+    background: #fafaf8;
+    color: #0b0b0b;
+  }
+  .banniere {
+    background: #000000;
+    color: #ffffff;
+    padding: 18px 20px;
+    border-radius: 0 0 12px 12px;
+    margin: 0 -1rem 24px;
+  }
+  .banniere .tag { font-size: 12px; font-weight: bold; letter-spacing: 1px; }
+  .banniere h1 { font-size: 20px; margin: 4px 0 0; font-weight: bold; }
+  .nav { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .nav a {
+    font-size: 13px; color: #0b0b0b; text-decoration: none;
+    border: 1px solid #c3c2b7; border-radius: 6px; padding: 6px 12px;
+  }
+  .nav a.actif { background: #000; color: #fff; border-color: #000; }
+  .carte {
+    background: #ffffff;
+    border: 1px solid #e1e0d9;
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+  label { display: block; font-size: 13px; color: #52514e; margin-bottom: 4px; }
+  input[type=text], select {
+    width: 100%;
+    height: 40px;
+    border: 1px solid #c3c2b7;
+    border-radius: 6px;
+    padding: 0 10px;
+    font-size: 15px;
+    margin-bottom: 14px;
+  }
+  button {
+    width: 100%;
+    height: 42px;
+    border-radius: 6px;
+    border: none;
+    background: #000000;
+    color: #ffffff;
+    font-size: 15px;
+    cursor: pointer;
+  }
+  button:hover { background: #2c2c2a; }
+  .competence { border-top: 1px solid #e1e0d9; padding: 12px 0; }
+  .competence .code { font-size: 12px; font-weight: bold; color: #52514e; }
+  .competence .intitule { font-size: 14px; margin: 4px 0 8px; }
+  .niveaux { display: flex; gap: 8px; }
+  .niveaux label {
+    flex: 1; text-align: center; margin: 0;
+    border: 1px solid #c3c2b7; border-radius: 6px; padding: 8px 0;
+    cursor: pointer; font-size: 14px; color: #0b0b0b;
+  }
+  .niveaux input { display: none; }
+  .niveaux label.selected { background: #eeedfe; border-color: #7f77dd; }
+  #msg { font-size: 14px; margin-top: 10px; }
+  #msg.erreur { color: #a32d2d; }
+  #msg.succes { color: #0f6e56; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="banniere">
+  <div class="tag">SPCL &middot; SYSTÈMES ET PROCÉDÉS</div>
+  <h1>Suivi des compétences</h1>
+</div>
+
+<div class="nav">
+  <a href="#" class="actif">Auto-évaluation</a>
+  <a href="<?= scriptUrl ?>?page=pt100-etalonnage">Étalonnage Pt100</a>
+</div>
+
+<div id="ecranCode" class="carte">
+  <label for="codeInput">Ton code</label>
+  <input type="text" id="codeInput" inputmode="numeric" maxlength="4" placeholder="1234">
+  <button onclick="connecter()">Se connecter</button>
+  <div id="msgCode"></div>
+</div>
+
+<div id="ecranEval" class="carte hidden">
+  <p id="bonjour" style="font-weight:bold;margin-top:0;"></p>
+
+  <label for="chapitreSelect">Chapitre</label>
+  <select id="chapitreSelect" onchange="chargerActivites()"></select>
+
+  <label for="activiteSelect">Activité</label>
+  <select id="activiteSelect" onchange="chargerCompetences()"></select>
+
+  <div id="competencesZone"></div>
+
+  <button onclick="soumettre()" style="margin-top:16px;">Valider mon auto-évaluation</button>
+  <div id="msgEval"></div>
+</div>
+
+<script>
+var codeActuel = "";
+var competencesActuelles = [];
+
+function connecter() {
+  var code = document.getElementById("codeInput").value.trim();
+  var msg = document.getElementById("msgCode");
+  msg.textContent = "Vérification...";
+  msg.className = "";
+  google.script.run.withSuccessHandler(function(res) {
+    if (res.ok) {
+      codeActuel = code;
+      document.getElementById("bonjour").textContent = "Bonjour " + res.nom;
+      document.getElementById("ecranCode").classList.add("hidden");
+      document.getElementById("ecranEval").classList.remove("hidden");
+      chargerChapitres();
+    } else {
+      msg.textContent = "Code invalide, réessaie.";
+      msg.className = "erreur";
+    }
+  }).verifierCode(code);
+}
+
+function chargerChapitres() {
+  google.script.run.withSuccessHandler(function(chapitres) {
+    var sel = document.getElementById("chapitreSelect");
+    sel.innerHTML = "";
+    chapitres.forEach(function(c) {
+      var opt = document.createElement("option");
+      opt.value = c; opt.textContent = c;
+      sel.appendChild(opt);
+    });
+    chargerActivites();
+  }).getChapitres();
+}
+
+function chargerActivites() {
+  var chapitre = document.getElementById("chapitreSelect").value;
+  google.script.run.withSuccessHandler(function(activites) {
+    var sel = document.getElementById("activiteSelect");
+    sel.innerHTML = "";
+    activites.forEach(function(a) {
+      var opt = document.createElement("option");
+      opt.value = a; opt.textContent = a;
+      sel.appendChild(opt);
+    });
+    chargerCompetences();
+  }).getActivites(chapitre);
+}
+
+function chargerCompetences() {
+  var chapitre = document.getElementById("chapitreSelect").value;
+  var activite = document.getElementById("activiteSelect").value;
+  google.script.run.withSuccessHandler(function(competences) {
+    competencesActuelles = competences;
+    var zone = document.getElementById("competencesZone");
+    zone.innerHTML = "";
+    competences.forEach(function(c, idx) {
+      var div = document.createElement("div");
+      div.className = "competence";
+      var niveauxHtml = ["A", "B", "C", "D"].map(function(n) {
+        return '<label data-idx="' + idx + '" data-niveau="' + n + '">' +
+          '<input type="radio" name="niveau_' + idx + '" value="' + n + '">' +
+          '<span>' + n + '</span></label>';
+      }).join("");
+      div.innerHTML =
+        '<div class="code">' + c.code + '</div>' +
+        '<div class="intitule">' + c.intitule + '</div>' +
+        '<div class="niveaux">' + niveauxHtml + '</div>';
+      zone.appendChild(div);
+    });
+    document.querySelectorAll(".niveaux label").forEach(function(lbl) {
+      lbl.addEventListener("click", function() {
+        var idx = lbl.getAttribute("data-idx");
+        document.querySelectorAll('label[data-idx="' + idx + '"]').forEach(function(l) {
+          l.classList.remove("selected");
+        });
+        lbl.classList.add("selected");
+        lbl.querySelector("input").checked = true;
+      });
+    });
+  }).getCompetences(chapitre, activite);
+}
+
+function soumettre() {
+  var niveaux = [];
+  var incomplet = false;
+  competencesActuelles.forEach(function(c, idx) {
+    var checked = document.querySelector('input[name="niveau_' + idx + '"]:checked');
+    if (!checked) { incomplet = true; return; }
+    niveaux.push({ code: c.code, intitule: c.intitule, niveau: checked.value });
+  });
+  var msg = document.getElementById("msgEval");
+  if (incomplet || niveaux.length === 0) {
+    msg.textContent = "Coche un niveau pour chaque compétence avant de valider.";
+    msg.className = "erreur";
+    return;
+  }
+  msg.textContent = "Envoi...";
+  msg.className = "";
+  google.script.run.withSuccessHandler(function(res) {
+    if (res.ok) {
+      msg.textContent = "Auto-évaluation enregistrée, merci !";
+      msg.className = "succes";
+    } else {
+      msg.textContent = res.message || "Erreur lors de l'envoi.";
+      msg.className = "erreur";
+    }
+  }).soumettreEvaluation({
+    code: codeActuel,
+    chapitre: document.getElementById("chapitreSelect").value,
+    activite: document.getElementById("activiteSelect").value,
+    niveaux: niveaux
+  });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 1rem 3rem;
+    background: #fafaf8;
+    color: #0b0b0b;
+  }
+  .banniere {
+    background: #000000;
+    color: #ffffff;
+    padding: 18px 20px;
+    border-radius: 0 0 12px 12px;
+    margin: 0 -1rem 24px;
+  }
+  .banniere .tag { font-size: 12px; font-weight: bold; letter-spacing: 1px; }
+  .banniere h1 { font-size: 20px; margin: 4px 0 0; font-weight: bold; }
+  .nav { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .nav a {
+    font-size: 13px; color: #0b0b0b; text-decoration: none;
+    border: 1px solid #c3c2b7; border-radius: 6px; padding: 6px 12px;
+  }
+  .nav a.actif { background: #000; color: #fff; border-color: #000; }
+  p.intro { color: #52514e; font-size: 14px; margin-top: 0; margin-bottom: 1.5rem; }
+  #capture {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e1e0d9;
+    padding: 1rem 1.25rem;
+  }
+  input {
+    width: 100%;
+    box-sizing: border-box;
+    height: 32px;
+    border: 1px solid #c3c2b7;
+    border-radius: 6px;
+    padding: 0 8px;
+    font-size: 14px;
+  }
+  button {
+    margin-top: 16px;
+    height: 38px;
+    padding: 0 16px;
+    border-radius: 6px;
+    border: 1px solid #888780;
+    background: #ffffff;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  button:hover { background: #f1efe8; }
+  button.principal { background: #000; color: #fff; border-color: #000; }
+  button.principal:hover { background: #2c2c2a; }
+  .grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 6px 12px; align-items: center; margin-bottom: 12px; }
+  .grid span.label { font-size: 13px; }
+  .grid span.header { font-size: 12px; color: #52514e; }
+  #results { margin-top: 12px; padding-top: 12px; border-top: 1px solid #e1e0d9; font-size: 14px; line-height: 1.6; }
+  .legend { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 12px; font-size: 12px; color: #52514e; }
+  .legend span { display: flex; align-items: center; gap: 4px; }
+  .swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  #msgSave { font-size: 13px; margin-top: 10px; }
+  #msgSave.erreur { color: #a32d2d; }
+  #msgSave.succes { color: #0f6e56; }
+</style>
+</head>
+<body>
+
+<div class="banniere">
+  <div class="tag">SPCL &middot; SYSTÈMES ET PROCÉDÉS</div>
+  <h1>Étalonnage Pt100 — faisceau de droites</h1>
+</div>
+
+<div class="nav">
+  <a href="<?= scriptUrl ?>">Auto-évaluation</a>
+  <a href="#" class="actif">Étalonnage Pt100</a>
+</div>
+
+<p class="intro">Entre tes 5 points de mesure et les incertitudes. Le graphique se met à jour automatiquement. Une fois terminé, tu peux enregistrer tes résultats avec ton code élève.</p>
+
+<div id="capture">
+<div class="grid">
+<span></span><span class="header">T (°C)</span><span class="header">U (V)</span>
+<span class="label">Point 1</span><input type="number" id="T0" value="0" step="0.1"><input type="number" id="U0" value="0.22" step="0.01">
+<span class="label">Point 2</span><input type="number" id="T1" value="20" step="0.1"><input type="number" id="U1" value="0.38" step="0.01">
+<span class="label">Point 3</span><input type="number" id="T2" value="40" step="0.1"><input type="number" id="U2" value="0.61" step="0.01">
+<span class="label">Point 4</span><input type="number" id="T3" value="60" step="0.1"><input type="number" id="U3" value="0.79" step="0.01">
+<span class="label">Point 5</span><input type="number" id="T4" value="80" step="0.1"><input type="number" id="U4" value="1.00" step="0.01">
+</div>
+
+<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px;margin-bottom:16px;">
+<span style="display:flex;align-items:center;gap:8px;">
+<label style="font-size:13px;color:#52514e;">incertitude thermomètre de référence ±</label>
+<input type="number" id="uT" value="0.5" step="0.1" style="width:70px;">
+<span style="font-size:13px;color:#52514e;">°C</span>
+</span>
+<span style="display:flex;align-items:center;gap:8px;">
+<label style="font-size:13px;color:#52514e;">incertitude sur U (quantum du CAN / 2) ±</label>
+<input type="number" id="uU" value="0.0024" step="0.0001" style="width:80px;">
+<span style="font-size:13px;color:#52514e;">V</span>
+</span>
+</div>
+<p style="font-size:12px;color:#52514e;margin-top:-8px;">La valeur par défaut correspond au CAN 10 bits de l'Arduino vu en S&amp;P1 (quantum q ≈ 4,89 mV sur 0-5V).</p>
+
+<div style="position:relative;height:340px;">
+<canvas id="chart" role="img" aria-label="Graphique tension en fonction de la température avec faisceau de droites" width="640" height="340" style="width:100%;height:100%;"></canvas>
+</div>
+
+<div class="legend">
+<span><span class="swatch" style="background:#0b0b0b;"></span>droite moyenne</span>
+<span><span class="swatch" style="background:#d85a30;"></span>pente max</span>
+<span><span class="swatch" style="background:#1d9e75;"></span>pente min</span>
+</div>
+
+<div id="results"></div>
+</div>
+
+<div style="display:flex;gap:10px;flex-wrap:wrap;">
+<button id="exportBtn">Convertir en image</button>
+</div>
+
+<div id="capture2" style="margin-top:20px;">
+<label for="codeInput">Ton code (pour enregistrer ces résultats)</label>
+<input type="text" id="codeInput" inputmode="numeric" maxlength="4" placeholder="1234">
+<button id="saveBtn" class="principal">Enregistrer mes résultats</button>
+<div id="msgSave"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+var derniersResultats = null;
+
+function getPoints(){
+  var pts=[];
+  for(var i=0;i<5;i++){
+    var t=parseFloat(document.getElementById('T'+i).value);
+    var u=parseFloat(document.getElementById('U'+i).value);
+    if(!isNaN(t)&&!isNaN(u))pts.push({t:t,u:u});
+  }
+  return pts;
+}
+function regression(pts){
+  var n=pts.length,sx=0,sy=0,sxy=0,sxx=0;
+  pts.forEach(function(p){sx+=p.t;sy+=p.u;sxy+=p.t*p.u;sxx+=p.t*p.t;});
+  var a=(n*sxy-sx*sy)/(n*sxx-sx*sx);
+  var b=(sy-a*sx)/n;
+  return {a:a,b:b};
+}
+function draw(){
+  var pts=getPoints();
+  var uT=parseFloat(document.getElementById('uT').value)||0;
+  var uU=parseFloat(document.getElementById('uU').value)||0;
+  var canvas=document.getElementById('chart');
+  var ctx=canvas.getContext('2d');
+  var w=canvas.width,h=canvas.height;
+  ctx.clearRect(0,0,w,h);
+  if(pts.length<2){
+    document.getElementById('results').innerHTML='Entre au moins 2 points pour tracer le graphique.';
+    return;
+  }
+  pts.sort(function(a,b){return a.t-b.t;});
+  var tMin=Math.min.apply(null,pts.map(function(p){return p.t;}))-uT-5;
+  var tMax=Math.max.apply(null,pts.map(function(p){return p.t;}))+uT+5;
+  var uMin=Math.min.apply(null,pts.map(function(p){return p.u;}))-uU;
+  var uMax=Math.max.apply(null,pts.map(function(p){return p.u;}))+uU;
+  var uPad=(uMax-uMin)*0.2||0.1;
+  uMin-=uPad;uMax+=uPad;
+  var mL=55,mR=15,mT=15,mB=35;
+  var pw=w-mL-mR,ph=h-mT-mB;
+  function px(t){return mL+(t-tMin)/(tMax-tMin)*pw;}
+  function py(u){return mT+ph-(u-uMin)/(uMax-uMin)*ph;}
+  ctx.strokeStyle='#888780';
+  ctx.lineWidth=1.5;
+  ctx.beginPath();
+  ctx.moveTo(mL,mT);ctx.lineTo(mL,mT+ph);ctx.lineTo(mL+pw,mT+ph);
+  ctx.stroke();
+  ctx.fillStyle='#52514e';
+  ctx.font='11px sans-serif';
+  ctx.textAlign='center';
+  ctx.fillText('T (°C)',mL+pw-20,mT+ph+22);
+  ctx.save();
+  ctx.translate(14,mT+15);
+  ctx.textAlign='left';
+  ctx.fillText('U (V)',0,0);
+  ctx.restore();
+  var reg=regression(pts);
+  var first=pts[0],last=pts[pts.length-1];
+  var maxA={t:first.t+uT,u:first.u-uU},maxB={t:last.t-uT,u:last.u+uU};
+  var minA={t:first.t-uT,u:first.u+uU},minB={t:last.t+uT,u:last.u-uU};
+  var slopeMax=(maxB.u-maxA.u)/(maxB.t-maxA.t);
+  var slopeMin=(minB.u-minA.u)/(minB.t-minA.t);
+  var bMax=maxA.u-slopeMax*maxA.t;
+  var bMin=minA.u-slopeMin*minA.t;
+  function drawLine(a,b,color,width){
+    ctx.strokeStyle=color;ctx.lineWidth=width;
+    ctx.beginPath();
+    ctx.moveTo(px(tMin),py(a*tMin+b));
+    ctx.lineTo(px(tMax),py(a*tMax+b));
+    ctx.stroke();
+  }
+  drawLine(slopeMax,bMax,'#d85a30',1.5);
+  drawLine(slopeMin,bMin,'#1d9e75',1.5);
+  drawLine(reg.a,reg.b,'#0b0b0b',2);
+  pts.forEach(function(p){
+    var bx=px(p.t-uT),bw=px(p.t+uT)-px(p.t-uT);
+    var byTop=py(p.u+uU),byBot=py(p.u-uU);
+    var by=Math.min(byTop,byBot),bh=Math.max(Math.abs(byBot-byTop),3);
+    ctx.strokeStyle='#5f5e5a';
+    ctx.lineWidth=1;
+    ctx.strokeRect(bx,by,bw,bh);
+    ctx.fillStyle='#0b0b0b';
+    ctx.beginPath();
+    ctx.arc(px(p.t),py(p.u),3,0,7);
+    ctx.fill();
+  });
+  var aMoy=reg.a, aMax=Math.max(slopeMin,slopeMax), aMin=Math.min(slopeMin,slopeMax);
+  document.getElementById('results').innerHTML=
+    'pente moyenne (a<sub>moy</sub>) : '+aMoy.toFixed(4)+' V/°C<br>'+
+    'pente max (a<sub>max</sub>) : '+aMax.toFixed(4)+' V/°C<br>'+
+    'pente min (a<sub>min</sub>) : '+aMin.toFixed(4)+' V/°C<br>'+
+    '<span style="color:#52514e;font-size:12px;">À toi de calculer l\'incertitude relative sur la pente (formule dans ton document).</span>';
+  derniersResultats = { points: pts, uT: uT, uU: uU, aMoyenne: aMoy, aMax: aMax, aMin: aMin };
+}
+document.querySelectorAll('#capture input').forEach(function(el){el.addEventListener('input',draw);});
+draw();
+document.getElementById('exportBtn').addEventListener('click',function(){
+  html2canvas(document.getElementById('capture')).then(function(canvas){
+    var link=document.createElement('a');
+    link.download='etalonnage_pt100.png';
+    link.href=canvas.toDataURL();
+    link.click();
+  });
+});
+document.getElementById('saveBtn').addEventListener('click',function(){
+  var code = document.getElementById('codeInput').value.trim();
+  var msg = document.getElementById('msgSave');
+  if (!code) { msg.textContent = 'Entre ton code.'; msg.className = 'erreur'; return; }
+  msg.textContent = 'Enregistrement...';
+  msg.className = '';
+  google.script.run.withSuccessHandler(function(res){
+    if (res.ok) { msg.textContent = 'Résultats enregistrés, merci !'; msg.className = 'succes'; }
+    else { msg.textContent = res.message || 'Erreur.'; msg.className = 'erreur'; }
+  }).enregistrerResultatOutil({ code: code, outil: 'pt100-etalonnage', donnees: derniersResultats });
+});
+</script>
+</body>
+</html>
