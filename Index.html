@@ -160,6 +160,13 @@ function chargerSuivi() {
         barre.innerHTML = '<div class="remplissage ' + couleur + '" style="width:' + pct + '%;"></div>';
         bloc.appendChild(labelDiv);
         bloc.appendChild(barre);
+        if (pct < 50) {
+          var lienQCM = document.createElement("a");
+          lienQCM.href = "<?= scriptUrl ?>?page=qcm";
+          lienQCM.textContent = "→ Réviser ce chapitre avec un QCM";
+          lienQCM.style.cssText = "font-size:12px;color:#0b0b0b;display:inline-block;margin-top:4px;";
+          bloc.appendChild(lienQCM);
+        }
       }
 
       parChapitre[chapitre].forEach(function(r) {

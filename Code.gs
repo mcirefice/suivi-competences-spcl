@@ -8,6 +8,7 @@ const SHEET_ELEVES = "Élèves";
 const SHEET_REFERENTIEL = "Référentiel";
 const SHEET_REPONSES = "Réponses";
 const SHEET_CODES = "Codes";
+const SHEET_QCM = "QCM";
 
 // Liste des pages disponibles, organisées par chapitre pour la navigation.
 // Pour ajouter un nouveau module :
@@ -19,6 +20,7 @@ const MODULES = [
   { chapitre: "Général",  label: "Codes Arduino / Python", page: "codes-source",      template: "CodesSource",      type: "page" },
   { chapitre: "Général",  label: "Outils",                page: "outils",            template: "Outils",           type: "page" },
   { chapitre: "Général",  label: "Tableau de bord (prof)", page: "tableau-de-bord",   template: "TableauDeBord",    type: "page" },
+  { chapitre: "Général",  label: "QCM de révision",       page: "qcm",               template: "QCM",              type: "page" },
   { chapitre: "S&P2",     label: "Étalonnage Pt100",       page: "pt100-etalonnage",  template: "PT100Etalonnage",  type: "outil" },
 ];
 
@@ -38,6 +40,7 @@ function onOpen() {
     .addItem("Réinitialiser tous les codes (nouvelle année)", "reinitialiserCodes")
     .addItem("Initialiser le référentiel (S&P1 + S&P2)", "seedReferentiel")
     .addItem("Initialiser la bibliothèque de codes (S&P1 + S&P2)", "seedCodes")
+    .addItem("Initialiser les QCM (S&P1 + S&P2)", "seedQCM")
     .addToUi();
 }
 
@@ -108,6 +111,7 @@ function getSheet(name) {
     if (name === SHEET_REFERENTIEL) sh.appendRow(["Chapitre", "Activité", "Code compétence", "Intitulé"]);
     if (name === SHEET_REPONSES) sh.appendRow(["Horodatage", "Code", "Nom complet", "Chapitre", "Activité", "Code compétence", "Intitulé", "Niveau"]);
     if (name === SHEET_CODES) sh.appendRow(["Chapitre", "Langage", "Titre", "Description", "Code"]);
+    if (name === SHEET_QCM) sh.appendRow(["Chapitre", "Question", "OptionA", "OptionB", "OptionC", "OptionD", "BonneReponse", "Explication"]);
   }
   return sh;
 }
@@ -172,6 +176,68 @@ function seedCodes() {
     if (!existing.includes(r[2])) sh.appendRow(r);
   });
   SpreadsheetApp.getUi().alert(rows.length + " code(s) initialisé(s) dans l'onglet Codes.");
+}
+
+function getQCM(chapitre) {
+  const data = getSheet(SHEET_QCM).getDataRange().getValues();
+  return data.slice(1).filter(r => r[0] === chapitre && r[1]).map(r => ({
+    question: r[1], options: { A: r[2], B: r[3], C: r[4], D: r[5] }, bonneReponse: r[6], explication: r[7],
+  }));
+}
+
+function getChapitresQCM() {
+  const data = getSheet(SHEET_QCM).getDataRange().getValues();
+  return [...new Set(data.slice(1).filter(r => r[0]).map(r => r[0]))];
+}
+
+function enregistrerResultatQCM(payload) {
+  const verif = verifierCode(payload.code);
+  if (!verif.ok) return { ok: false, message: "Code invalide." };
+  const sh = getSheet("Réponses_Outils");
+  if (sh.getLastRow() === 0) sh.appendRow(["Horodatage", "Code", "Nom complet", "Outil", "Données (JSON)"]);
+  sh.appendRow([new Date(), payload.code, verif.nom, "qcm-" + payload.chapitre, JSON.stringify({ score: payload.score, total: payload.total })]);
+  return { ok: true };
+}
+
+function seedQCM() {
+  const sh = getSheet(SHEET_QCM);
+  const rows = [
+    ["S&P1", "Quelle fonction Arduino permet de mettre une broche à l'état HAUT ou BAS ?",
+     "analogRead()", "digitalWrite()", "Serial.print()", "pinMode()", "B",
+     "digitalWrite(broche, HIGH/LOW) impose un état logique (5V ou 0V) sur une broche numérique configurée en sortie. pinMode() sert uniquement à définir si la broche est en entrée ou en sortie, pas à changer son état."],
+    ["S&P1", "La fonction analogRead() sur une carte Arduino Uno renvoie une valeur comprise entre :",
+     "0 et 5", "0 et 255", "0 et 1023", "0 et 1", "C",
+     "Le CAN de l'Arduino Uno est un CAN 10 bits, donc 2¹⁰ = 1024 niveaux possibles, numérotés de 0 à 1023."],
+    ["S&P1", "Pour un CAN de n bits fonctionnant entre 0 et 5V, le quantum (plus petite variation détectable) est d'autant plus...",
+     "grand que n est grand", "petit que n est grand", "indépendant de n", "grand que la fréquence d'échantillonnage est grande", "B",
+     "q = Vmax / (2ⁿ - 1). Plus n est grand, plus le nombre de niveaux 2ⁿ est grand, donc plus q est petit : la résolution est plus fine."],
+    ["S&P1", "D'après le théorème de Shannon, pour reconstituer fidèlement un signal de fréquence maximale fmax, la fréquence d'échantillonnage fe doit vérifier :",
+     "fe = fmax", "fe < fmax", "fe > 2×fmax", "fe < 2×fmax", "C",
+     "Le théorème de Shannon impose fe > 2×fmax pour éviter le repliement de spectre (aliasing), qui déformerait le signal reconstitué à partir des échantillons."],
+    ["S&P1", "Quelle instruction affiche du texte suivi d'un retour à la ligne sur le moniteur série ?",
+     "Serial.begin()", "Serial.print()", "Serial.println()", "Serial.read()", "C",
+     "Serial.println() affiche le contenu ET ajoute un retour à la ligne, contrairement à Serial.print() qui reste sur la même ligne. Serial.begin() sert uniquement à initialiser la communication série."],
+    ["S&P2", "Un pont diviseur de tension permet de :",
+     "amplifier un signal", "atténuer/adapter un signal", "inverser un signal", "filtrer les hautes fréquences", "B",
+     "Un pont diviseur de tension ne peut qu'atténuer, jamais amplifier : la tension de sortie est toujours inférieure ou égale à la tension d'entrée."],
+    ["S&P2", "Une sonde Pt100 est un capteur dont la grandeur électrique sensible à la température est :",
+     "sa capacité", "sa résistivité", "sa tension de sortie directe", "son inductance", "B",
+     "La Pt100 est un capteur résistif en platine (100 Ω à 0°C) : sa résistance varie avec la température, c'est pourquoi on la conditionne avec un pont diviseur de tension."],
+    ["S&P2", "La formule de la chaleur échangée par un corps de masse m et de chaleur massique c pour une variation de température ΔT est :",
+     "Q = m/c × ΔT", "Q = m × c × ΔT", "Q = m × c / ΔT", "Q = m + c + ΔT", "B",
+     "Q = m × c × ΔT, en joules si m est en kg, c en J.kg⁻¹.K⁻¹ et ΔT en K (ou °C, l'écart étant identique dans les deux échelles)."],
+    ["S&P2", "Dans un système isolé (comme un calorimètre parfait), la somme des chaleurs échangées entre les corps vaut :",
+     "toujours positive", "toujours négative", "0", "égale à la masse totale", "C",
+     "Un système isolé n'échange rien avec l'extérieur : l'énergie thermique cédée par un corps est intégralement reçue par l'autre. D'où ΣQi = 0."],
+    ["S&P2", "Sur un graphique d'étalonnage, la méthode du « faisceau de droites » permet de déterminer :",
+     "la valeur moyenne uniquement", "un encadrement (min/max) de la pente, donc son incertitude", "le nombre de points de mesure nécessaires", "la température ambiante", "B",
+     "En traçant la droite la plus pentue et la moins pentue compatibles avec les rectangles d'incertitude des points extrêmes, on obtient un encadrement [amin ; amax] de la pente réelle — une estimation graphique de l'incertitude, sans aucun calcul."],
+  ];
+  const existing = sh.getDataRange().getValues().slice(1).map(r => r[1]);
+  rows.forEach(r => {
+    if (!existing.includes(r[1])) sh.appendRow(r);
+  });
+  SpreadsheetApp.getUi().alert(rows.length + " question(s) initialisée(s) dans l'onglet QCM.");
 }
 
 function verifierCode(code) {

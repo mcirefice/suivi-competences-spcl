@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<?!= include('Style.html'); ?>
+<style>
+  .question { font-size: 15px; font-weight: bold; margin-bottom: 14px; }
+  .optionBtn {
+    display: block; width: 100%; text-align: left; margin-bottom: 8px;
+    background: #fff; border: 1px solid #c3c2b7; border-radius: 8px; padding: 10px 14px; font-size: 14px;
+  }
+  .optionBtn:hover { background: #f1efe8; }
+  .optionBtn.correcte { background: #e3f3ea; border-color: #3e9b5c; }
+  .optionBtn.incorrecte { background: #fbe9e7; border-color: #d64545; }
+  .optionBtn[disabled] { cursor: default; }
+  .explication {
+    margin-top: 14px; padding: 12px 14px; border-radius: 8px; background: #f6f5f1;
+    border-left: 3px solid #0b0b0b; font-size: 13px; line-height: 1.6;
+  }
+  .explication .label { font-weight: bold; display: block; margin-bottom: 4px; }
+  .progressionQuiz { font-size: 12px; color: #52514e; margin-bottom: 10px; }
+  #ecranScore { text-align: center; }
+  #ecranScore .scoreChiffre { font-size: 36px; font-weight: bold; margin: 10px 0; }
+  #ecranCode2 label { margin-top: 0; }
+</style>
+</head>
+<body>
+
+<?!= include('Banniere.html', {titre: titre}); ?>
+<?!= include('Nav.html', {scriptUrl: scriptUrl, currentPage: currentPage}); ?>
+
+<div id="ecranChoix" class="carte">
+  <label for="codeInput2">Ton code</label>
+  <input type="text" id="codeInput2" inputmode="numeric" maxlength="4" placeholder="1234">
+  <label for="chapitreQCM">Chapitre à réviser</label>
+  <select id="chapitreQCM"></select>
+  <button class="principal" onclick="demarrerQuiz()">Commencer le QCM</button>
+  <div id="msgChoix"></div>
+</div>
+
+<div id="ecranQuiz" class="carte hidden">
+  <div class="progressionQuiz" id="progressionQuiz"></div>
+  <div class="question" id="questionTexte"></div>
+  <div id="optionsZone"></div>
+  <div id="explicationZone"></div>
+  <button id="btnSuivant" class="principal hidden" onclick="questionSuivante()" style="margin-top:14px;">Question suivante</button>
+</div>
+
+<div id="ecranScore" class="carte hidden">
+  <p style="font-size:14px;color:#52514e;margin:0;">Résultat</p>
+  <div class="scoreChiffre" id="scoreTexte"></div>
+  <p id="scoreMessage" style="font-size:14px;"></p>
+  <button class="principal" onclick="location.reload()">Refaire un QCM</button>
+</div>
+
+<script>
+var questions = [];
+var indexQuestion = 0;
+var score = 0;
+var codeActuel2 = "";
+var chapitreActuel = "";
+
+google.script.run.withSuccessHandler(function(chapitres) {
+  var sel = document.getElementById("chapitreQCM");
+  chapitres.forEach(function(c) {
+    var opt = document.createElement("option");
+    opt.value = c; opt.textContent = c;
+    sel.appendChild(opt);
+  });
+}).getChapitresQCM();
+
+function demarrerQuiz() {
+  var code = document.getElementById("codeInput2").value.trim();
+  var msg = document.getElementById("msgChoix");
+  if (!code) { msg.textContent = "Entre ton code."; msg.className = "erreur"; return; }
+  codeActuel2 = code;
+  chapitreActuel = document.getElementById("chapitreQCM").value;
+  msg.textContent = "Chargement...";
+  google.script.run.withSuccessHandler(function(qs) {
+    if (!qs || qs.length === 0) {
+      msg.textContent = "Aucune question disponible pour ce chapitre.";
+      msg.className = "erreur";
+      return;
+    }
+    questions = qs;
+    indexQuestion = 0;
+    score = 0;
+    document.getElementById("ecranChoix").classList.add("hidden");
+    document.getElementById("ecranQuiz").classList.remove("hidden");
+    afficherQuestion();
+  }).getQCM(chapitreActuel);
+}
+
+function afficherQuestion() {
+  var q = questions[indexQuestion];
+  document.getElementById("progressionQuiz").textContent = "Question " + (indexQuestion + 1) + " / " + questions.length;
+  document.getElementById("questionTexte").textContent = q.question;
+  document.getElementById("explicationZone").innerHTML = "";
+  document.getElementById("btnSuivant").classList.add("hidden");
+
+  var zone = document.getElementById("optionsZone");
+  zone.innerHTML = "";
+  ["A", "B", "C", "D"].forEach(function(lettre) {
+    var btn = document.createElement("button");
+    btn.className = "optionBtn";
+    btn.textContent = lettre + ". " + q.options[lettre];
+    btn.addEventListener("click", function() { repondre(lettre); });
+    zone.appendChild(btn);
+  });
+}
+
+function repondre(lettre) {
+  var q = questions[indexQuestion];
+  var boutons = document.querySelectorAll(".optionBtn");
+  boutons.forEach(function(b) { b.disabled = true; });
+  boutons.forEach(function(b, i) {
+    var lettreBtn = ["A", "B", "C", "D"][i];
+    if (lettreBtn === q.bonneReponse) b.classList.add("correcte");
+    else if (lettreBtn === lettre) b.classList.add("incorrecte");
+  });
+  if (lettre === q.bonneReponse) score++;
+
+  var bonne = (lettre === q.bonneReponse);
+  var exp = document.getElementById("explicationZone");
+  exp.innerHTML =
+    '<div class="explication"><span class="label">' + (bonne ? "✓ Bonne réponse !" : "✗ Pas tout à fait — la bonne réponse était " + q.bonneReponse + ".") + '</span>' +
+    q.explication + '</div>';
+  document.getElementById("btnSuivant").classList.remove("hidden");
+}
+
+function questionSuivante() {
+  indexQuestion++;
+  if (indexQuestion < questions.length) {
+    afficherQuestion();
+  } else {
+    terminerQuiz();
+  }
+}
+
+function terminerQuiz() {
+  document.getElementById("ecranQuiz").classList.add("hidden");
+  document.getElementById("ecranScore").classList.remove("hidden");
+  document.getElementById("scoreTexte").textContent = score + " / " + questions.length;
+  var pct = Math.round((score / questions.length) * 100);
+  var msg;
+  if (pct === 100) msg = "Sans faute ! Cette compétence semble bien maîtrisée.";
+  else if (pct >= 60) msg = "Pas mal, mais relis les explications des questions ratées avant de continuer.";
+  else msg = "Cette partie mérite d'être revue — relis le cours et les explications ci-dessus avant de refaire ton auto-évaluation.";
+  document.getElementById("scoreMessage").textContent = msg;
+  google.script.run.enregistrerResultatQCM({ code: codeActuel2, chapitre: chapitreActuel, score: score, total: questions.length });
+}
+</script>
+</body>
+</html>
