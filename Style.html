@@ -77,4 +77,24 @@
   button:hover { background: #f1efe8; }
   button.principal { width: 100%; background: #000000; color: #ffffff; border-color: #000000; }
   button.principal:hover { background: #2c2c2a; }
+  .hidden { display: none !important; }
 </style>
+<script>
+  function sauvegarderCode(code, nom) {
+    try {
+      localStorage.setItem("spcl_code", code);
+      if (nom) localStorage.setItem("spcl_nom", nom);
+    } catch (e) {}
+  }
+  function codeMemorise() {
+    try { return localStorage.getItem("spcl_code") || ""; } catch (e) { return ""; }
+  }
+  function preRemplirCode(inputId) {
+    var val = codeMemorise();
+    if (val) {
+      var el = document.getElementById(inputId);
+      if (el) el.value = val;
+    }
+    return val;
+  }
+</script>

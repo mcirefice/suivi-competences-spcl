@@ -170,6 +170,7 @@ function draw(){
 }
 document.querySelectorAll('#capture input').forEach(function(el){el.addEventListener('input',draw);});
 draw();
+preRemplirCode("codeInput");
 
 document.getElementById('exportBtn').addEventListener('click',function(){
   html2canvas(document.getElementById('capture')).then(function(canvas){
@@ -193,6 +194,7 @@ document.getElementById('saveBtn').addEventListener('click',function(){
   if (!code) { msg.textContent = 'Entre ton code.'; msg.className = 'erreur'; return; }
   msg.textContent = 'Enregistrement...';
   msg.className = '';
+  sauvegarderCode(code);
   google.script.run.withSuccessHandler(function(res){
     if (res.ok) { msg.textContent = 'Résultats enregistrés, merci !'; msg.className = 'succes'; }
     else { msg.textContent = res.message || 'Erreur.'; msg.className = 'erreur'; }

@@ -70,12 +70,14 @@ google.script.run.withSuccessHandler(function(chapitres) {
     sel.appendChild(opt);
   });
 }).getChapitresQCM();
+preRemplirCode("codeInput2");
 
 function demarrerQuiz() {
   var code = document.getElementById("codeInput2").value.trim();
   var msg = document.getElementById("msgChoix");
   if (!code) { msg.textContent = "Entre ton code."; msg.className = "erreur"; return; }
   codeActuel2 = code;
+  sauvegarderCode(code);
   chapitreActuel = document.getElementById("chapitreQCM").value;
   msg.textContent = "Chargement...";
   google.script.run.withSuccessHandler(function(qs) {

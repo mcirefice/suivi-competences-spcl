@@ -90,6 +90,7 @@
 var codeActuel = "";
 var competencesActuelles = [];
 var dernierSuivi = null;
+window.addEventListener("DOMContentLoaded", function() { preRemplirCode("codeInput"); });
 
 function refaireEvaluation(chapitre) {
   afficherOnglet("nouvelle");
@@ -190,6 +191,7 @@ function connecter() {
   google.script.run.withSuccessHandler(function(res) {
     if (res.ok) {
       codeActuel = code;
+      sauvegarderCode(code, res.nom);
       document.getElementById("bonjour").textContent = "Bonjour " + res.nom;
       document.getElementById("ecranCode").classList.add("hidden");
       document.getElementById("ecranEval").classList.remove("hidden");
