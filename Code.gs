@@ -231,7 +231,7 @@ function seedQCM() {
      "Serial.println() affiche le contenu ET ajoute un retour à la ligne, contrairement à Serial.print() qui reste sur la même ligne. Serial.begin() sert uniquement à initialiser la communication série.", "Débutant"],
     ["S&P2", "Un pont diviseur de tension permet de :",
      "amplifier un signal", "atténuer/adapter un signal", "inverser un signal", "filtrer les hautes fréquences", "B",
-     "Un pont diviseur de tension ne peut qu'atténuer, jamais amplifier : la tension de sortie est toujours inférieure ou égale à la tension d'entrée.", "Débutant"],
+     "Un pont diviseur de tension ne peut qu'atténuer, jamais amplifier : la tension de sortie est toujours inférieure ou égale à la tension d'entrée. Si un capteur délivre un signal trop faible pour être bien exploité, le pont diviseur ne peut pas résoudre ce problème — il faudrait un véritable amplificateur (montage à AOP), qui est un autre sujet.", "Débutant"],
     ["S&P2", "Une sonde Pt100 est un capteur dont la grandeur électrique sensible à la température est :",
      "sa capacité", "sa résistivité", "sa tension de sortie directe", "son inductance", "B",
      "La Pt100 est un capteur résistif en platine (100 Ω à 0°C) : sa résistance varie avec la température, c'est pourquoi on la conditionne avec un pont diviseur de tension.", "Débutant"],
