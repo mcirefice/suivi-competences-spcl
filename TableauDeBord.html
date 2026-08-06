@@ -47,11 +47,7 @@
 <?!= include('Nav.html', {scriptUrl: scriptUrl, currentPage: currentPage}); ?>
 
 <div id="ecranMdp" class="carte">
-  <label for="mdpInput">Mot de passe enseignant</label>
-  <input type="text" id="mdpInput" placeholder="•••••">
-  <button class="principal" onclick="connecterProf()">Afficher le tableau de bord</button>
-  <div id="msgMdp"></div>
-  <p style="font-size:12px;color:#8a8980;margin-top:14px;">Le mot de passe doit d'abord être défini par le professeur, depuis le menu "Suivi SPCL → Définir le mot de passe du Tableau de bord" dans le Google Sheet.</p>
+  <p id="msgAcces" style="margin:0;">Vérification de ton accès...</p>
 </div>
 
 <div id="contenu" class="hidden">
@@ -60,7 +56,6 @@
       <label for="chapitreDashboard" style="margin-bottom:4px;">Chapitre</label>
       <select id="chapitreDashboard" onchange="afficherTableau()"></select>
     </div>
-    <a href="#" onclick="seDeconnecterProf();return false;" style="font-size:13px;color:#52514e;">Se déconnecter (mode prof)</a>
   </div>
   <div class="carte resumeClasse">
     <div id="resumeZone"></div>
@@ -87,24 +82,15 @@
 var donneesDashboard = null;
 
 window.addEventListener("DOMContentLoaded", function() {
-  var mdp = mdpProfMemorise();
-  if (mdp) {
-    document.getElementById("mdpInput").value = mdp;
-    connecterProf();
+  var code = codeMemorise();
+  var msg = document.getElementById("msgAcces");
+  if (!code) {
+    msg.innerHTML = "Tu dois d'abord te connecter depuis la page d'accueil. <a href=\"<?= scriptUrl ?>\">Aller à l'accueil</a>";
+    return;
   }
-});
-
-function connecterProf() {
-  var mdp = document.getElementById("mdpInput").value;
-  var msg = document.getElementById("msgMdp");
-  if (!mdp) { msg.textContent = "Entre un mot de passe."; msg.className = "erreur"; return; }
-  msg.textContent = "Vérification...";
-  msg.className = "";
-  sauvegarderMdpProf(mdp);
-  google.script.run.withSuccessHandler(function(res) {
+  google.script.run.withFailureHandler(gererErreur).withSuccessHandler(function(res) {
     if (!res.ok) {
-      msg.textContent = res.message || "Erreur.";
-      msg.className = "erreur";
+      msg.textContent = res.message || "Accès refusé.";
       return;
     }
     donneesDashboard = res;
@@ -123,13 +109,13 @@ function connecterProf() {
       selExport.appendChild(opt2);
     });
     afficherTableau();
-  }).getTableauDeBord(mdp);
-}
+  }).getTableauDeBord(code);
+});
 
 function exporterQCM() {
   var chapitre = document.getElementById("chapitreExport").value;
   var niveau = document.getElementById("niveauExport").value;
-  google.script.run.withSuccessHandler(function(questions) {
+  google.script.run.withFailureHandler(gererErreur).withSuccessHandler(function(questions) {
     if (!questions || questions.length === 0) {
       alert("Aucune question trouvée pour " + chapitre + " / " + niveau + ".");
       return;

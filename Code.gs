@@ -16,16 +16,20 @@ const SHEET_QCM = "QCM";
 // 2. Ajouter une ligne ci-dessous : { chapitre: "S&Px", label: "Nom affiché", page: "cle-url", template: "NomDuModule" }
 // L'URL du module devient : <url du déploiement>?page=cle-url
 const MODULES = [
-  { chapitre: "Général",  label: "Auto-évaluation",       page: "competences",       template: "Index",            type: "page" },
-  { chapitre: "Général",  label: "Codes Arduino / Python", page: "codes-source",      template: "CodesSource",      type: "page" },
-  { chapitre: "Général",  label: "Outils",                page: "outils",            template: "Outils",           type: "page" },
-  { chapitre: "Général",  label: "Tableau de bord (prof)", page: "tableau-de-bord",   template: "TableauDeBord",    type: "page" },
-  { chapitre: "Général",  label: "QCM de révision",       page: "qcm",               template: "QCM",              type: "page" },
-  { chapitre: "S&P2",     label: "Étalonnage Pt100",       page: "pt100-etalonnage",  template: "PT100Etalonnage",  type: "outil" },
+  { chapitre: "Général",  label: "Auto-évaluation",       page: "competences",       template: "Index",            type: "page", profOnly: false },
+  { chapitre: "Général",  label: "Codes Arduino / Python", page: "codes-source",      template: "CodesSource",      type: "page", profOnly: false },
+  { chapitre: "Général",  label: "Outils",                page: "outils",            template: "Outils",           type: "page", profOnly: false },
+  { chapitre: "Général",  label: "QCM de révision",       page: "qcm",               template: "QCM",              type: "page", profOnly: false },
+  { chapitre: "Général",  label: "Tableau de bord (prof)", page: "tableau-de-bord",   template: "TableauDeBord",    type: "page", profOnly: true },
+  { chapitre: "S&P2",     label: "Étalonnage Pt100",       page: "pt100-etalonnage",  template: "PT100Etalonnage",  type: "outil", profOnly: false },
 ];
 
-function getModules() {
-  return MODULES.map(m => ({ chapitre: m.chapitre, label: m.label, page: m.page, type: m.type }));
+function getModules(code) {
+  const verif = verifierCode(code);
+  const role = verif.ok ? verif.role : "Élève";
+  return MODULES
+    .filter(m => !m.profOnly || role === "Professeur")
+    .map(m => ({ chapitre: m.chapitre, label: m.label, page: m.page, type: m.type }));
 }
 
 function getTemplateForPage(page) {
@@ -41,7 +45,6 @@ function onOpen() {
     .addItem("Initialiser le référentiel (S&P1 + S&P2)", "seedReferentiel")
     .addItem("Initialiser la bibliothèque de codes (S&P1 + S&P2)", "seedCodes")
     .addItem("Initialiser les QCM (S&P1 + S&P2)", "seedQCM")
-    .addItem("Définir le mot de passe du Tableau de bord", "definirMotDePasseProf")
     .addToUi();
 }
 
@@ -108,7 +111,7 @@ function getSheet(name) {
   let sh = ss.getSheetByName(name);
   if (!sh) {
     sh = ss.insertSheet(name);
-    if (name === SHEET_ELEVES) sh.appendRow(["Nom", "Prénom", "Code"]);
+    if (name === SHEET_ELEVES) sh.appendRow(["Nom", "Prénom", "Code", "Rôle"]);
     if (name === SHEET_REFERENTIEL) sh.appendRow(["Chapitre", "Activité", "Code compétence", "Intitulé"]);
     if (name === SHEET_REPONSES) sh.appendRow(["Horodatage", "Code", "Nom complet", "Chapitre", "Activité", "Code compétence", "Intitulé", "Niveau"]);
     if (name === SHEET_CODES) sh.appendRow(["Chapitre", "Langage", "Titre", "Description", "Code"]);
@@ -291,7 +294,8 @@ function verifierCode(code) {
   const data = getSheet(SHEET_ELEVES).getDataRange().getValues();
   for (let i = 1; i < data.length; i++) {
     if (String(data[i][2]) === String(code)) {
-      return { ok: true, nom: data[i][0] + " " + data[i][1] };
+      const role = (data[i][3] === "Professeur") ? "Professeur" : "Élève";
+      return { ok: true, nom: data[i][0] + " " + data[i][1], role: role };
     }
   }
   return { ok: false };
@@ -365,43 +369,14 @@ function getSuiviEleve(code) {
   return { ok: true, nom: verif.nom, resultats: resultats, progression: progression };
 }
 
-// ---------- Tableau de bord enseignant (protégé par mot de passe) ----------
-// La toute première saisie de mot de passe le définit de façon permanente (rien à
-// configurer à l'avance). Change-le en effaçant la propriété TEACHER_DASHBOARD_PASSWORD
-// dans Projet > Propriétés du projet > Propriétés du script, si besoin de le réinitialiser.
+// ---------- Tableau de bord enseignant (accès réservé au rôle "Professeur") ----------
+// Le rôle est défini dans l'onglet Élèves, colonne "Rôle" (mettre "Professeur" sur ta
+// propre ligne). Aucun mot de passe séparé : c'est ton code personnel qui donne l'accès.
 
-const TEACHER_PASSWORD_PROP = "TEACHER_DASHBOARD_PASSWORD";
-
-function verifierMotDePasseProf(motDePasse) {
-  if (!motDePasse) return false;
-  const props = PropertiesService.getScriptProperties();
-  const stored = props.getProperty(TEACHER_PASSWORD_PROP);
-  if (!stored) return false; // Aucun mot de passe défini : accès refusé tant que le prof ne l'a pas créé lui-même.
-  return stored === motDePasse;
-}
-
-function verifierAccesProf(motDePasse) {
-  return { ok: verifierMotDePasseProf(motDePasse) };
-}
-
-function definirMotDePasseProf() {
-  const ui = SpreadsheetApp.getUi();
-  const props = PropertiesService.getScriptProperties();
-  const existe = !!props.getProperty(TEACHER_PASSWORD_PROP);
-  const message = existe
-    ? "Un mot de passe est déjà défini. Tape le nouveau pour le remplacer :"
-    : "Choisis le mot de passe du Tableau de bord (prof) :";
-  const resp = ui.prompt("Mot de passe du Tableau de bord", message, ui.ButtonSet.OK_CANCEL);
-  if (resp.getSelectedButton() !== ui.Button.OK) return;
-  const mdp = resp.getResponseText().trim();
-  if (!mdp) { ui.alert("Mot de passe vide, rien n'a été changé."); return; }
-  props.setProperty(TEACHER_PASSWORD_PROP, mdp);
-  ui.alert("Mot de passe du Tableau de bord enregistré.");
-}
-
-function getTableauDeBord(motDePasse) {
-  if (!verifierMotDePasseProf(motDePasse)) {
-    return { ok: false, message: "Mot de passe incorrect." };
+function getTableauDeBord(code) {
+  const verif = verifierCode(code);
+  if (!verif.ok || verif.role !== "Professeur") {
+    return { ok: false, message: "Accès réservé au professeur." };
   }
   const eleves = getSheet(SHEET_ELEVES).getDataRange().getValues().slice(1).filter(r => r[0] && r[2]);
   const referentiel = getSheet(SHEET_REFERENTIEL).getDataRange().getValues().slice(1).filter(r => r[2]);

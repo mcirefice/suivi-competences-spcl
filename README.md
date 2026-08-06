@@ -71,7 +71,7 @@ Le module est alors accessible via `<url du déploiement>?page=nouvel-outil`, et
 | `Index.html` | Page d'auto-évaluation des compétences |
 | `PT100Etalonnage.html` | Outil : faisceau de droites pour l'étalonnage Pt100 (S&P2) |
 | `Outils.html` | Hub qui liste tous les outils (type "outil"), groupés par chapitre |
-| `TableauDeBord.html` | Vue classe entière pour toi, protégée par mot de passe (défini à la première connexion) |
+| `TableauDeBord.html` | Vue classe entière, accès réservé au rôle "Professeur" (voir section Connexion) |
 | `QCM.html` | QCM de révision (5 questions/chapitre), correction détaillée immédiate après chaque réponse |
 | `CodesSource.html` | Module : bibliothèque de codes Arduino/Python, recherche + copie en un clic |
 | `Nav.html` | Fragment de navigation partagé (barre horizontale unique), inclus dans chaque page |
@@ -80,25 +80,38 @@ Le module est alors accessible via `<url du déploiement>?page=nouvel-outil`, et
 
 ## Base de données (le Google Sheet)
 
-- **Élèves** : Nom, Prénom, Code — rempli à la main + codes générés par le menu.
+- **Élèves** : Nom, Prénom, Code, **Rôle** (vide = Élève, "Professeur" = accès complet + Tableau de bord) — rempli à la main + codes générés par le menu.
 - **Référentiel** : Chapitre, Activité, Code compétence, Intitulé — à compléter au fil des chapitres.
 - **Réponses** : rempli automatiquement à chaque auto-évaluation.
 - **Réponses_Outils** : rempli automatiquement par les modules type "outil" (ex. Pt100), au format horodatage / code / outil / données JSON.
 - **Codes** : Chapitre, Langage (Arduino/Python), Titre, Description, Code — bibliothèque de codes affichée dans le module *Codes Arduino / Python*. **Tu peux ajouter une ligne directement dans cet onglet, aucun besoin de repasser par GitHub/clasp** — le module la récupère automatiquement à chaque ouverture. Pour le remplissage initial (S&P1 + S&P2), utilise le menu **Suivi SPCL → Initialiser la bibliothèque de codes**.
 - **QCM** : Chapitre, Question, OptionA-D, BonneReponse (A/B/C/D), Explication, **Niveau** (Débutant/Avancé, dernière colonne) — **tu peux ajouter des questions directement dans cet onglet**, aucun redéploiement nécessaire. Remplissage initial via **Suivi SPCL → Initialiser les QCM** (ça migre aussi automatiquement les anciennes questions vers "Débutant" si tu avais déjà lancé cette action avant l'ajout du niveau).
 
-## Connexion
+## Connexion — système unifié par rôle
 
-La page d'accueil propose maintenant un choix explicite **« Je suis élève »** / **« Je suis professeur »** :
-- **Élève** : code à 4 chiffres, mémorisé indéfiniment sur l'appareil (`localStorage`) — l'élève n'a besoin de se reconnecter qu'une seule fois par appareil, avec un lien "Se déconnecter" visible sous le bandeau sur toutes les pages.
-- **Professeur** : mot de passe, mémorisé uniquement le temps que l'onglet du navigateur reste ouvert (`sessionStorage`) — redemandé à chaque nouvelle session, plus sûr sur un iPad partagé entre élèves. Un lien "Se déconnecter (mode prof)" est disponible sur le Tableau de bord.
+Il n'y a plus qu'**un seul système de code**, pour tout le monde. Le rôle (Élève ou Professeur)
+est déterminé directement dans l'onglet **Élèves** de ton Sheet, colonne **D (Rôle)**.
 
-L'onglet **Tableau de bord** disparaît automatiquement du menu dès qu'un élève est connecté sur l'appareil, pour éviter toute confusion — mais la vraie protection reste le mot de passe, qui bloque l'accès aux données même si quelqu'un tape l'adresse directement.
+**Pour te donner accès au Tableau de bord :**
+1. Ajoute une ligne dans l'onglet Élèves avec ton propre Nom/Prénom.
+2. Génère-toi un code comme pour les élèves (menu **Suivi SPCL → Générer les codes élèves manquants**).
+3. Dans la colonne **D (Rôle)** de ta ligne, tape exactement `Professeur`.
+
+Avec ce code, tu as accès à **tous les onglets, y compris le Tableau de bord** (invisible pour
+les élèves, qui n'ont pas ce rôle). Avec un code élève classique (colonne D vide), on n'a accès
+qu'aux onglets destinés aux élèves — le Tableau de bord n'apparaît même pas dans le menu.
+
+La page d'accueil ne montre **aucun onglet de navigation tant qu'on n'est pas connecté** — un
+seul champ code, point d'entrée unique pour tout le monde. Une fois connecté, le menu qui
+apparaît dépend automatiquement du rôle associé à ce code.
+
+Le code reste mémorisé sur l'appareil (`localStorage`) tant qu'on ne clique pas sur
+"Se déconnecter" (visible sous le bandeau, sur toutes les pages).
 
 ## Tableau de bord enseignant
 
 Le module **Tableau de bord (prof)** te montre toute la classe, chapitre par chapitre, avec le dernier niveau (A/B/C/D) de chaque élève sur chaque compétence — sans avoir à ouvrir le Sheet.
 
-Il est protégé par un **mot de passe séparé des codes élèves**. Ce mot de passe doit être **défini explicitement par toi**, depuis le Sheet : menu **Suivi SPCL → Définir le mot de passe du Tableau de bord**. Tant qu'il n'a pas été défini de cette façon, la page refuse tout accès — personne ne peut plus "prendre" le mot de passe en le devinant ou en tapant n'importe quoi en premier. Tu peux le changer à tout moment en relançant la même action de menu.
+Il est protégé par le **rôle "Professeur"** (voir section Connexion tout en haut de ce document) — plus de mot de passe séparé à gérer.
 
 Les élèves, eux, ont un onglet **« Mon suivi »** dans la page Auto-évaluation (à côté de "Nouvelle auto-évaluation"), qui leur montre leur propre historique — mais uniquement leurs résultats, jamais ceux des autres.

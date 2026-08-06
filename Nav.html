@@ -3,10 +3,14 @@
 (function() {
   var scriptUrl = "<?= scriptUrl ?>";
   var currentPage = "<?= currentPage ?>";
-  google.script.run.withSuccessHandler(function(modules) {
+  var code = codeMemorise();
+  if (!code) return; // Pas connecté : aucun onglet affiché.
+
+  function rendre(modules) {
     var current = modules.find(function(m) { return m.page === currentPage; });
     var estDansUnOutil = current && current.type === "outil";
     var zone = document.getElementById("navBar");
+    zone.innerHTML = "";
     modules.filter(function(m) { return m.type === "page"; }).forEach(function(m) {
       var estActif = (m.page === currentPage) || (m.page === "outils" && estDansUnOutil);
       var a = document.createElement("a");
@@ -15,6 +19,16 @@
       a.innerHTML = '<span class="chap">' + m.chapitre + '</span><span class="lab">' + m.label + '</span>';
       zone.appendChild(a);
     });
-  }).getModules();
+  }
+
+  try {
+    var cache = localStorage.getItem("spcl_modules_cache");
+    if (cache) rendre(JSON.parse(cache));
+  } catch (e) {}
+
+  google.script.run.withSuccessHandler(function(modules) {
+    try { localStorage.setItem("spcl_modules_cache", JSON.stringify(modules)); } catch (e) {}
+    rendre(modules);
+  }).getModules(code);
 })();
 </script>

@@ -82,14 +82,18 @@
   #statutConnexion .nomEleve { color: #ff5c5c; font-size: 16px; font-weight: bold; }
 </style>
 <script>
-  function sauvegarderCode(code, nom) {
+  function sauvegarderCode(code, nom, role) {
     try {
       localStorage.setItem("spcl_code", code);
       if (nom) localStorage.setItem("spcl_nom", nom);
+      localStorage.setItem("spcl_role", role || "Élève");
     } catch (e) {}
   }
   function codeMemorise() {
     try { return localStorage.getItem("spcl_code") || ""; } catch (e) { return ""; }
+  }
+  function roleMemorise() {
+    try { return localStorage.getItem("spcl_role") || ""; } catch (e) { return ""; }
   }
   function preRemplirCode(inputId) {
     var val = codeMemorise();
@@ -104,28 +108,37 @@
     var zone = document.getElementById("statutConnexion");
     if (!zone) return;
     if (!code) { zone.innerHTML = ""; return; }
+    var nomCache = "";
+    try { nomCache = localStorage.getItem("spcl_nom") || ""; } catch (e) {}
+    var roleCache = roleMemorise();
+    if (nomCache) {
+      var tagProfCache = (roleCache === "Professeur") ? " (mode professeur)" : "";
+      zone.innerHTML = "Connecté : <span class=\"nomEleve\">" + nomCache + "</span>" + tagProfCache + " &middot; <a href=\"#\" onclick=\"seDeconnecter();return false;\">Se déconnecter</a>";
+    }
     google.script.run.withSuccessHandler(function(res) {
       if (res && res.ok) {
-        zone.innerHTML = "Connecté : <span class=\"nomEleve\">" + res.nom + "</span> &middot; <a href=\"#\" onclick=\"seDeconnecter();return false;\">Se déconnecter</a>";
+        sauvegarderCode(code, res.nom, res.role);
+        var tagProf = (res.role === "Professeur") ? " (mode professeur)" : "";
+        zone.innerHTML = "Connecté : <span class=\"nomEleve\">" + res.nom + "</span>" + tagProf + " &middot; <a href=\"#\" onclick=\"seDeconnecter();return false;\">Se déconnecter</a>";
       } else {
-        try { localStorage.removeItem("spcl_code"); localStorage.removeItem("spcl_nom"); } catch (e) {}
+        try { localStorage.removeItem("spcl_code"); localStorage.removeItem("spcl_nom"); localStorage.removeItem("spcl_role"); } catch (e) {}
         zone.innerHTML = "";
       }
     }).verifierCode(code);
   }
   function seDeconnecter() {
-    try { localStorage.removeItem("spcl_code"); localStorage.removeItem("spcl_nom"); } catch (e) {}
+    try {
+      localStorage.removeItem("spcl_code");
+      localStorage.removeItem("spcl_nom");
+      localStorage.removeItem("spcl_role");
+      localStorage.removeItem("spcl_modules_cache");
+    } catch (e) {}
     window.location.href = "<?= scriptUrl ?>";
   }
-  function sauvegarderMdpProf(mdp) {
-    try { sessionStorage.setItem("spcl_mdp_prof", mdp); } catch (e) {}
-  }
-  function mdpProfMemorise() {
-    try { return sessionStorage.getItem("spcl_mdp_prof") || ""; } catch (e) { return ""; }
-  }
-  function seDeconnecterProf() {
-    try { sessionStorage.removeItem("spcl_mdp_prof"); } catch (e) {}
-    window.location.href = "<?= scriptUrl ?>";
+  function gererErreur(err) {
+    console.error(err);
+    var message = (err && err.message) ? err.message : String(err);
+    alert("Une erreur est survenue : " + message);
   }
   document.addEventListener("DOMContentLoaded", afficherStatutConnexion);
 </script>
