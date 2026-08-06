@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<?!= include('Style.html', {scriptUrl: scriptUrl}); ?>
+<style>
+  .grille { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 640px) { .grille { grid-template-columns: 1fr; } }
+  .resultat {
+    background: #f6f5f1; border-radius: 8px; padding: 12px 14px; margin-top: 8px;
+  }
+  .resultat .valeur { font-size: 22px; font-weight: bold; }
+  .resultat .label { font-size: 12px; color: #52514e; }
+  .barreClasse { display: flex; height: 28px; border-radius: 6px; overflow: hidden; margin: 10px 0; font-size: 11px; }
+  .barreClasse span { display: flex; align-items: center; justify-content: center; color: #fff; font-weight: bold; }
+  .curseurPos {
+    position: relative; height: 18px; margin-top: -4px;
+  }
+  .curseurPos .fleche {
+    position: absolute; top: 0; transform: translateX(-50%);
+    font-size: 14px; transition: left 0.2s;
+  }
+  .onglets { display: flex; gap: 8px; margin-bottom: 18px; }
+  .onglets button { flex: 1; }
+</style>
+</head>
+<body>
+
+<?!= include('Banniere.html', {titre: titre}); ?>
+<?!= include('Nav.html', {scriptUrl: scriptUrl, currentPage: currentPage}); ?>
+
+<p style="font-size:13px;color:#52514e;margin-top:-8px;">Aucune chaudière réelle en labo (sécurité, coût) — ce simulateur te permet d'explorer dynamiquement les grandeurs plutôt que de les lire figées dans un énoncé.</p>
+
+<div class="carte" style="padding:10px 14px;">
+<svg viewBox="0 0 700 300" width="100%" style="max-height:280px;" role="img" aria-label="Schéma de principe d'une chaudière">
+<title>Schéma de principe d'une chaudière</title>
+<desc>Combustible alimentant un brûleur, chambre de combustion et échangeur au sein de la chaudière, départ et retour du circuit de chauffage vers un radiateur, évacuation des fumées par la cheminée</desc>
+
+<!-- Silo / réserve combustible -->
+<rect x="20" y="140" width="70" height="90" rx="6" fill="#efeee7" stroke="#8a8980" stroke-width="1.5"/>
+<text x="55" y="270" text-anchor="middle" font-size="12" fill="#52514e">Combustible</text>
+<path d="M90 200 L130 200" stroke="#8a8980" stroke-width="2" marker-end="url(#fleche)"/>
+
+<!-- Corps de chaudière -->
+<rect x="130" y="80" width="180" height="160" rx="10" fill="#fff" stroke="#0b0b0b" stroke-width="2"/>
+<text x="220" y="66" text-anchor="middle" font-size="13" font-weight="bold" fill="#0b0b0b">Chaudière</text>
+
+<!-- Brûleur / chambre de combustion -->
+<rect x="145" y="160" width="70" height="60" rx="6" fill="#fbe3d5" stroke="#d9622e" stroke-width="1.5"/>
+<text x="180" y="195" text-anchor="middle" font-size="11" fill="#a94a1a">Brûleur</text>
+
+<!-- Echangeur -->
+<rect x="230" y="100" width="65" height="120" rx="6" fill="#e1eef7" stroke="#378add" stroke-width="1.5"/>
+<text x="262" y="160" text-anchor="middle" font-size="11" fill="#215a8f" transform="rotate(-90 262 160)">Échangeur</text>
+
+<!-- Cheminée / fumées -->
+<rect x="255" y="30" width="24" height="55" fill="#c9c8bd"/>
+<path id="fumee" d="M267 30 C 260 10, 280 5, 267 -15" stroke="#8a8980" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.6"/>
+<text id="labelFumees" x="267" y="20" text-anchor="middle" font-size="11" font-weight="bold" fill="#a32d2d">200 °C</text>
+
+<!-- Départ chauffage (vers radiateur) -->
+<path d="M310 110 L 420 110" stroke="#d64545" stroke-width="3" marker-end="url(#flecheRouge)"/>
+<text x="365" y="100" text-anchor="middle" font-size="11" fill="#a32d2d">Départ (chaud)</text>
+
+<!-- Retour chauffage -->
+<path d="M420 210 L 310 210" stroke="#378add" stroke-width="3" marker-end="url(#flecheBleue)"/>
+<text x="365" y="228" text-anchor="middle" font-size="11" fill="#215a8f">Retour (froid)</text>
+
+<!-- Radiateur -->
+<rect x="420" y="100" width="90" height="120" rx="6" fill="#fff" stroke="#0b0b0b" stroke-width="1.5"/>
+<line x1="435" y1="100" x2="435" y2="220" stroke="#c3c2b7" stroke-width="2"/>
+<line x1="450" y1="100" x2="450" y2="220" stroke="#c3c2b7" stroke-width="2"/>
+<line x1="465" y1="100" x2="465" y2="220" stroke="#c3c2b7" stroke-width="2"/>
+<line x1="480" y1="100" x2="480" y2="220" stroke="#c3c2b7" stroke-width="2"/>
+<line x1="495" y1="100" x2="495" y2="220" stroke="#c3c2b7" stroke-width="2"/>
+<text x="465" y="240" text-anchor="middle" font-size="11" fill="#52514e">Radiateur</text>
+
+<!-- Legende fleches -->
+<defs>
+<marker id="fleche" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#8a8980" stroke-width="1.5"/>
+</marker>
+<marker id="flecheRouge" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#d64545" stroke-width="1.5"/>
+</marker>
+<marker id="flecheBleue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#378add" stroke-width="1.5"/>
+</marker>
+</defs>
+</svg>
+</div>
+
+<div class="onglets">
+  <button id="ongletDim" class="onglet actif" onclick="afficherOnglet('dim')">Dimensionnement</button>
+  <button id="ongletCond" class="onglet" onclick="afficherOnglet('cond')">Chaudière à condensation</button>
+</div>
+
+<div id="blocDim" class="carte">
+  <label for="combustible">Combustible</label>
+  <select id="combustible" onchange="majCombustible()">
+    <option value="bois">Granulés de bois (pellets)</option>
+    <option value="gaz">Gaz naturel</option>
+    <option value="fioul">Fioul domestique</option>
+  </select>
+
+  <div class="grille">
+    <div>
+      <label for="pci">Pouvoir calorifique (PCI)</label>
+      <input type="number" id="pci" step="0.1">
+    </div>
+    <div>
+      <label for="densite">Masse volumique (kg/m³)</label>
+      <input type="number" id="densite" step="1">
+    </div>
+  </div>
+
+  <div class="grille">
+    <div>
+      <label for="surface">Surface à chauffer (m²)</label>
+      <input type="number" id="surface" value="100" step="1">
+    </div>
+    <div>
+      <label for="besoin">Besoin énergétique (kWh/m²/an)</label>
+      <input type="number" id="besoin" value="120" step="1">
+    </div>
+  </div>
+
+  <div class="grille">
+    <div>
+      <label for="coefPrimaire">Coefficient énergie primaire</label>
+      <input type="number" id="coefPrimaire" value="1" step="0.05">
+    </div>
+    <div>
+      <label for="partChauffage">Part du chauffage dans la conso. totale (%)</label>
+      <input type="number" id="partChauffage" value="100" step="1">
+    </div>
+  </div>
+
+  <div id="resultatsDim"></div>
+</div>
+
+<div id="blocCond" class="carte hidden">
+  <p style="font-size:13px;color:#52514e;margin-top:0;">Une chaudière classique évacue les fumées chaudes (~200°C) sans récupérer la chaleur latente de condensation de la vapeur d'eau qu'elles contiennent. Une chaudière à condensation refroidit ces fumées bien plus bas (~55°C) et récupère une partie de cette énergie.</p>
+
+  <label for="masseCombustible">Masse de combustible brûlée (kg) — méthane pris comme référence</label>
+  <input type="number" id="masseCombustible" value="1" step="0.1">
+
+  <div class="grille">
+    <div>
+      <label for="tempAncienne">Température fumées — chaudière ancienne (°C)</label>
+      <input type="range" id="tempAncienne" min="120" max="250" value="200" oninput="calculerCondensation()">
+      <div class="resultat"><span class="valeur" id="valTempAncienne">200 °C</span></div>
+    </div>
+    <div>
+      <label for="tempCondensation">Température fumées — chaudière à condensation (°C)</label>
+      <input type="range" id="tempCondensation" min="30" max="90" value="55" oninput="calculerCondensation()">
+      <div class="resultat"><span class="valeur" id="valTempCondensation">55 °C</span></div>
+    </div>
+  </div>
+
+  <div id="resultatsCond"></div>
+  <p style="font-size:12px;color:#8a8980;">Estimation simplifiée : l'écart PCS/PCI pour le gaz naturel représente environ 10 % du PCI (chaleur latente de la vapeur d'eau formée), répartie ici proportionnellement à l'abaissement de température des fumées obtenu.</p>
+</div>
+
+<script>
+var donnees = {
+  bois:  { pci: 4.8,  densite: 650,  unite: "kg", uniteVol: "m³" },
+  gaz:   { pci: 10,   densite: null, unite: "m³", uniteVol: null },
+  fioul: { pci: 10,   densite: 840,  unite: "L",  uniteVol: "L" }
+};
+
+function majSchemaFumees(temperature) {
+  var label = document.getElementById("labelFumees");
+  var fumee = document.getElementById("fumee");
+  if (!label || !fumee) return;
+  label.textContent = temperature + " °C";
+  var couleur = temperature >= 150 ? "#a32d2d" : (temperature >= 80 ? "#d9622e" : "#378add");
+  label.setAttribute("fill", couleur);
+  fumee.setAttribute("stroke", couleur);
+  fumee.setAttribute("opacity", temperature >= 150 ? "0.7" : "0.4");
+}
+
+function afficherOnglet(nom) {
+  document.getElementById("ongletDim").className = "onglet" + (nom === "dim" ? " actif" : "");
+  document.getElementById("ongletCond").className = "onglet" + (nom === "cond" ? " actif" : "");
+  document.getElementById("blocDim").className = "carte" + (nom === "dim" ? "" : " hidden");
+  document.getElementById("blocCond").className = "carte" + (nom === "cond" ? "" : " hidden");
+  if (nom === "dim") {
+    majSchemaFumees(200);
+  } else {
+    majSchemaFumees(parseFloat(document.getElementById("tempCondensation").value));
+  }
+}
+
+function majCombustible() {
+  var c = donnees[document.getElementById("combustible").value];
+  document.getElementById("pci").value = c.pci;
+  document.getElementById("densite").value = c.densite || "";
+  document.getElementById("densite").disabled = !c.densite;
+  calculerDimensionnement();
+}
+
+function classeEnergetique(consoPrimaire) {
+  var classes = [
+    { nom: "A", max: 50, couleur: "#1d9e75" },
+    { nom: "B", max: 90, couleur: "#7cb342" },
+    { nom: "C", max: 150, couleur: "#c8d84a" },
+    { nom: "D", max: 230, couleur: "#e8b93a" },
+    { nom: "E", max: 330, couleur: "#e08a2e" },
+    { nom: "F", max: 450, couleur: "#d9622e" },
+    { nom: "G", max: 9999, couleur: "#d64545" }
+  ];
+  for (var i = 0; i < classes.length; i++) {
+    if (consoPrimaire <= classes[i].max) return { classe: classes[i].nom, index: i, total: classes.length, couleur: classes[i].couleur };
+  }
+  return { classe: "G", index: 6, total: classes.length, couleur: "#d64545" };
+}
+
+function calculerDimensionnement() {
+  var combustibleKey = document.getElementById("combustible").value;
+  var c = donnees[combustibleKey];
+  var pci = parseFloat(document.getElementById("pci").value) || 0;
+  var densite = parseFloat(document.getElementById("densite").value) || null;
+  var surface = parseFloat(document.getElementById("surface").value) || 0;
+  var besoin = parseFloat(document.getElementById("besoin").value) || 0;
+  var coefPrimaire = parseFloat(document.getElementById("coefPrimaire").value) || 1;
+  var partChauffage = (parseFloat(document.getElementById("partChauffage").value) || 100) / 100;
+
+  var energieAnnuelle = surface * besoin; // kWh (énergie finale nécessaire au chauffage)
+  var masse = energieAnnuelle / pci; // kg (ou m3/L selon combustible, voir unite)
+  var volume = densite ? masse / densite : null; // m3 ou L selon densite fournie
+
+  var consoTotalePrimaire = (energieAnnuelle / partChauffage) * coefPrimaire / surface; // kWh/m2/an énergie primaire
+  var cls = classeEnergetique(consoTotalePrimaire);
+
+  var html = "";
+  html += '<div class="grille">';
+  html += '<div class="resultat"><div class="valeur">' + energieAnnuelle.toFixed(0) + ' kWh</div><div class="label">Énergie annuelle nécessaire au chauffage</div></div>';
+  html += '<div class="resultat"><div class="valeur">' + masse.toFixed(0) + ' ' + c.unite + '</div><div class="label">Quantité de combustible / an</div></div>';
+  if (volume !== null) {
+    html += '<div class="resultat"><div class="valeur">' + volume.toFixed(2) + ' ' + c.uniteVol + '</div><div class="label">Volume de stockage nécessaire</div></div>';
+  }
+  html += '<div class="resultat"><div class="valeur">' + consoTotalePrimaire.toFixed(0) + ' kWh/m²/an</div><div class="label">Énergie primaire (label BBC : seuil 80)</div></div>';
+  html += '</div>';
+
+  html += '<div class="barreClasse">';
+  var classesLabels = ["A","B","C","D","E","F","G"];
+  var classesCouleurs = ["#1d9e75","#7cb342","#c8d84a","#e8b93a","#e08a2e","#d9622e","#d64545"];
+  classesLabels.forEach(function(l, i) {
+    html += '<span style="flex:1;background:' + classesCouleurs[i] + ';">' + l + '</span>';
+  });
+  html += '</div>';
+  var pos = (cls.index + 0.5) / cls.total * 100;
+  html += '<div class="curseurPos"><span class="fleche" style="left:' + pos + '%;">▲ Classe ' + cls.classe + '</span></div>';
+
+  document.getElementById("resultatsDim").innerHTML = html;
+}
+
+function calculerCondensation() {
+  var tAnc = parseFloat(document.getElementById("tempAncienne").value);
+  var tCond = parseFloat(document.getElementById("tempCondensation").value);
+  document.getElementById("valTempAncienne").textContent = tAnc + " °C";
+  document.getElementById("valTempCondensation").textContent = tCond + " °C";
+  majSchemaFumees(tCond);
+  var masse = parseFloat(document.getElementById("masseCombustible").value) || 0;
+  var pciGaz = 10; // kWh/kg, methane pris comme reference (valeur usuelle)
+  var energieTotale = masse * pciGaz;
+  var ecartPCS = energieTotale * 0.10; // ~10% pour le gaz naturel (ecart PCS/PCI usuel)
+  var plageMax = 250 - 30; // etendue des sliders
+  var abaissement = Math.max(0, tAnc - tCond);
+  var fractionRecuperee = Math.min(1, abaissement / plageMax * 2); // approx, sature vers 1
+  var energieRecuperee = ecartPCS * fractionRecuperee;
+
+  var html = "";
+  html += '<div class="grille">';
+  html += '<div class="resultat"><div class="valeur">' + energieTotale.toFixed(2) + ' kWh</div><div class="label">Énergie totale (PCI) pour ' + masse + ' kg</div></div>';
+  html += '<div class="resultat"><div class="valeur">≈ ' + energieRecuperee.toFixed(2) + ' kWh</div><div class="label">Énergie de condensation récupérée (estimation)</div></div>';
+  html += '</div>';
+  document.getElementById("resultatsCond").innerHTML = html;
+}
+
+document.querySelectorAll('#blocDim input, #blocDim select').forEach(function(el) {
+  el.addEventListener('input', calculerDimensionnement);
+});
+majCombustible();
+calculerCondensation();
+majSchemaFumees(200);
+</script>
+</body>
+</html>
