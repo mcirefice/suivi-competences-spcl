@@ -1,34 +1,38 @@
 <div class="navBar" id="navBar"></div>
 <script>
-(function() {
-  var scriptUrl = "<?= scriptUrl ?>";
-  var currentPage = "<?= currentPage ?>";
+var scriptUrlNav = "<?= scriptUrl ?>";
+var currentPageNav = "<?= currentPage ?>";
+
+function rendreNav(modules) {
+  var current = modules.find(function(m) { return m.page === currentPageNav; });
+  var estDansUnOutil = current && current.type === "outil";
+  var zone = document.getElementById("navBar");
+  zone.innerHTML = "";
+  modules.filter(function(m) { return m.type === "page"; }).forEach(function(m) {
+    var estActif = (m.page === currentPageNav) || (m.page === "outils" && estDansUnOutil);
+    var a = document.createElement("a");
+    a.className = "navPill" + (estActif ? " actif" : "");
+    a.href = scriptUrlNav + "?page=" + m.page;
+    a.innerHTML = '<span class="chap">' + m.chapitre + '</span><span class="lab">' + m.label + '</span>';
+    zone.appendChild(a);
+  });
+}
+
+function rafraichirNav() {
   var code = codeMemorise();
-  if (!code) return; // Pas connecté : aucun onglet affiché.
-
-  function rendre(modules) {
-    var current = modules.find(function(m) { return m.page === currentPage; });
-    var estDansUnOutil = current && current.type === "outil";
-    var zone = document.getElementById("navBar");
-    zone.innerHTML = "";
-    modules.filter(function(m) { return m.type === "page"; }).forEach(function(m) {
-      var estActif = (m.page === currentPage) || (m.page === "outils" && estDansUnOutil);
-      var a = document.createElement("a");
-      a.className = "navPill" + (estActif ? " actif" : "");
-      a.href = scriptUrl + "?page=" + m.page;
-      a.innerHTML = '<span class="chap">' + m.chapitre + '</span><span class="lab">' + m.label + '</span>';
-      zone.appendChild(a);
-    });
+  if (!code) {
+    document.getElementById("navBar").innerHTML = "";
+    return;
   }
-
   try {
     var cache = localStorage.getItem("spcl_modules_cache");
-    if (cache) rendre(JSON.parse(cache));
+    if (cache) rendreNav(JSON.parse(cache));
   } catch (e) {}
-
   google.script.run.withSuccessHandler(function(modules) {
     try { localStorage.setItem("spcl_modules_cache", JSON.stringify(modules)); } catch (e) {}
-    rendre(modules);
+    rendreNav(modules);
   }).getModules(code);
-})();
+}
+
+rafraichirNav();
 </script>

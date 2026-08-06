@@ -200,6 +200,8 @@ function connecter() {
       document.getElementById("ecranEval").classList.remove("hidden");
       chargerChapitres();
       google.script.run.withSuccessHandler(function(res) { dernierSuivi = res; }).getSuiviEleve(codeActuel);
+      if (typeof afficherStatutConnexion === "function") afficherStatutConnexion();
+      if (typeof rafraichirNav === "function") rafraichirNav();
     } else {
       msg.textContent = "Code invalide, réessaie.";
       msg.className = "erreur";
