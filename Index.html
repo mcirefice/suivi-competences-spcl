@@ -90,7 +90,10 @@
 var codeActuel = "";
 var competencesActuelles = [];
 var dernierSuivi = null;
-window.addEventListener("DOMContentLoaded", function() { preRemplirCode("codeInput"); });
+window.addEventListener("DOMContentLoaded", function() {
+  var code = preRemplirCode("codeInput");
+  if (code) { connecter(); }
+});
 
 function refaireEvaluation(chapitre) {
   afficherOnglet("nouvelle");

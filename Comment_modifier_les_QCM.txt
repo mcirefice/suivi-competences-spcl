@@ -1,0 +1,53 @@
+COMMENT MODIFIER UNE QUESTION DE QCM DANS LE GOOGLE SHEET
+============================================================
+
+Où ça se trouve
+----------------
+Dans ton Google Sheet, onglet "QCM" (en bas, à côté de "Codes", "Référentiel"...).
+
+Les colonnes, dans l'ordre exact (NE PAS les réorganiser)
+------------------------------------------------------------
+A - Chapitre      : ex. "S&P1"  (doit correspondre exactement à un chapitre existant)
+B - Question      : l'énoncé complet
+C - OptionA        : texte de la réponse A
+D - OptionB        : texte de la réponse B
+E - OptionC        : texte de la réponse C
+F - OptionD        : texte de la réponse D
+G - BonneReponse   : UNE SEULE lettre parmi A, B, C ou D (majuscule, sans espace)
+H - Explication    : le texte qui s'affiche après la réponse (juste ou fausse)
+I - Niveau         : "Débutant" ou "Avancé" (exactement, avec la majuscule)
+
+Ce que tu peux faire sans risque
+-----------------------------------
+- Modifier le texte d'une question, d'une option ou d'une explication : oui, à tout moment, ça
+  prend effet immédiatement, aucun redéploiement nécessaire.
+- Ajouter une nouvelle ligne (nouvelle question) : oui, remplis les 9 colonnes A à I. Elle
+  apparaîtra automatiquement dans l'appli au prochain chargement.
+- Supprimer une ligne : oui, la question disparaît simplement de l'appli.
+- Changer la bonne réponse : oui, change juste la lettre en colonne G. Attention à bien vérifier
+  que cette lettre correspond au bon texte en colonnes C à F.
+
+Les 3 pièges à éviter
+------------------------
+1. La colonne G (BonneReponse) doit contenir EXACTEMENT "A", "B", "C" ou "D" — pas "a" minuscule,
+   pas "Réponse A", pas d'espace avant/après. Si ce n'est pas exact, la question s'affichera mais
+   aucune réponse ne sera jamais reconnue comme correcte.
+
+2. La colonne I (Niveau) doit contenir EXACTEMENT "Débutant" ou "Avancé" (avec la majuscule et
+   l'accent). Une faute de frappe ici (ex. "débutant" sans majuscule) fait disparaître la question
+   du niveau correspondant dans l'appli, sans message d'erreur.
+
+3. La colonne A (Chapitre) doit correspondre à un nom de chapitre déjà utilisé ailleurs dans le
+   Sheet (comme dans l'onglet Référentiel), à l'orthographe et à la casse près — "S&P1" et "SP1"
+   ou "S&p1" sont considérés comme deux chapitres différents par l'application.
+
+Ne touche pas à la ligne 1
+------------------------------
+La toute première ligne (les en-têtes : Chapitre, Question, OptionA...) ne doit jamais être
+supprimée ni modifiée — l'application se base dessus pour savoir où chercher les données.
+
+Pour vérifier rapidement qu'une modification est bien prise en compte
+--------------------------------------------------------------------
+Ouvre l'appli, va dans "QCM de révision", choisis le chapitre et le niveau concernés, et lance
+le QCM. Si ta modification n'apparaît pas, vérifie les 3 pièges ci-dessus, ou essaie de rafraîchir
+la page avec Ctrl+F5.

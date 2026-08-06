@@ -34,6 +34,11 @@
   .remplissage.jaune { background: #d8b93a; }
   .remplissage.vert { background: #3e9b5c; }
   .ligneResume .pct { width: 40px; text-align: right; font-size: 12px; color: #52514e; flex-shrink: 0; }
+  .pastilleQCM {
+    font-size: 11px; font-weight: bold; padding: 3px 9px; border-radius: 999px; flex-shrink: 0; white-space: nowrap;
+  }
+  .pastilleQCM.fait { background: #e3f3ea; color: #0f6e56; border: 1px solid #3e9b5c; }
+  .pastilleQCM.nonFait { background: #f6f5f1; color: #8a8980; border: 1px solid #dcdbd2; }
 </style>
 </head>
 <body>
@@ -60,6 +65,19 @@
   <div class="tableauWrap">
     <table class="dashboard" id="tableauDashboard"></table>
   </div>
+
+  <div class="carte" style="margin-top:20px;">
+    <p style="font-weight:bold;margin-top:0;">Relecture des QCM (export PDF)</p>
+    <label for="chapitreExport">Chapitre</label>
+    <select id="chapitreExport"></select>
+    <label for="niveauExport">Niveau</label>
+    <select id="niveauExport">
+      <option value="Débutant">Débutant</option>
+      <option value="Avancé">Avancé</option>
+    </select>
+    <button onclick="exporterQCM()">Exporter en PDF</button>
+    <p style="font-size:12px;color:#8a8980;margin-top:10px;margin-bottom:0;">Ouvre un aperçu, puis utilise "Imprimer" → "Enregistrer en PDF" dans la fenêtre qui s'ouvre.</p>
+  </div>
 </div>
 
 <script>
@@ -82,13 +100,57 @@ function connecterProf() {
     document.getElementById("contenu").classList.remove("hidden");
     var sel = document.getElementById("chapitreDashboard");
     sel.innerHTML = "";
+    var selExport = document.getElementById("chapitreExport");
+    selExport.innerHTML = "";
     res.chapitres.forEach(function(ch) {
       var opt = document.createElement("option");
       opt.value = ch; opt.textContent = ch;
       sel.appendChild(opt);
+      var opt2 = document.createElement("option");
+      opt2.value = ch; opt2.textContent = ch;
+      selExport.appendChild(opt2);
     });
     afficherTableau();
   }).getTableauDeBord(mdp);
+}
+
+function exporterQCM() {
+  var chapitre = document.getElementById("chapitreExport").value;
+  var niveau = document.getElementById("niveauExport").value;
+  google.script.run.withSuccessHandler(function(questions) {
+    if (!questions || questions.length === 0) {
+      alert("Aucune question trouvée pour " + chapitre + " / " + niveau + ".");
+      return;
+    }
+    var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>QCM ' + chapitre + ' - ' + niveau + '</title>' +
+      '<style>' +
+      'body{font-family:Arial,sans-serif;max-width:700px;margin:30px auto;color:#0b0b0b;}' +
+      'h1{font-size:20px;border-bottom:2px solid #000;padding-bottom:8px;}' +
+      '.q{margin-bottom:24px;page-break-inside:avoid;}' +
+      '.q .num{font-weight:bold;font-size:14px;}' +
+      '.q .enonce{font-size:14px;margin:6px 0 8px;}' +
+      '.q .opt{font-size:13px;margin:3px 0;padding-left:12px;}' +
+      '.q .opt.bonne{font-weight:bold;}' +
+      '.q .opt.bonne:before{content:"✓ ";}' +
+      '.q .exp{font-size:12px;color:#444;background:#f2f2f2;padding:8px 10px;border-left:3px solid #000;margin-top:8px;}' +
+      '@media print{button{display:none;}}' +
+      '</style></head><body>' +
+      '<button onclick="window.print()" style="margin-bottom:20px;padding:8px 16px;">Imprimer / Enregistrer en PDF</button>' +
+      '<h1>QCM — ' + chapitre + ' (' + niveau + ')</h1>';
+    questions.forEach(function(q, i) {
+      html += '<div class="q"><div class="num">Question ' + (i + 1) + '</div>' +
+        '<div class="enonce">' + q.question + '</div>';
+      ["A", "B", "C", "D"].forEach(function(l) {
+        var estBonne = (l === q.bonneReponse);
+        html += '<div class="opt' + (estBonne ? ' bonne' : '') + '">' + l + '. ' + q.options[l] + '</div>';
+      });
+      html += '<div class="exp"><strong>Explication :</strong> ' + q.explication + '</div></div>';
+    });
+    html += '</body></html>';
+    var fenetre = window.open();
+    fenetre.document.write(html);
+    fenetre.document.close();
+  }).getQCM(chapitre, niveau);
 }
 
 function afficherResume(chapitre, competences) {
@@ -99,12 +161,16 @@ function afficherResume(chapitre, competences) {
     var nbA = competences.filter(function(c) { return e.niveaux[c.code] === "A"; }).length;
     var pct = Math.round((nbA / competences.length) * 100);
     var couleur = pct < 25 ? "rouge" : pct < 50 ? "orange" : pct < 75 ? "jaune" : "vert";
+    var qcmInfo = e.qcm ? e.qcm[chapitre] : null;
+    var pastille = qcmInfo
+      ? '<span class="pastilleQCM fait">QCM ' + qcmInfo.score + '/' + qcmInfo.total + (qcmInfo.niveau ? ' (' + qcmInfo.niveau + ')' : '') + '</span>'
+      : '<span class="pastilleQCM nonFait">QCM non fait</span>';
     var ligne = document.createElement("div");
     ligne.className = "ligneResume";
     ligne.innerHTML =
       '<span class="nom">' + e.nom + '</span>' +
       '<span class="barreProgression"><span class="remplissage ' + couleur + '" style="width:' + pct + '%;display:block;"></span></span>' +
-      '<span class="pct">' + pct + '%</span>';
+      '<span class="pct">' + pct + '%</span>' + pastille;
     zone.appendChild(ligne);
   });
 }

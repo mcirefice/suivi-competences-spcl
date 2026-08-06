@@ -78,6 +78,7 @@
   button.principal { width: 100%; background: #000000; color: #ffffff; border-color: #000000; }
   button.principal:hover { background: #2c2c2a; }
   .hidden { display: none !important; }
+  #statutConnexion a { color: #c9c9c9; text-decoration: underline; }
 </style>
 <script>
   function sauvegarderCode(code, nom) {
@@ -97,4 +98,23 @@
     }
     return val;
   }
+  function afficherStatutConnexion() {
+    var code = codeMemorise();
+    var zone = document.getElementById("statutConnexion");
+    if (!zone) return;
+    if (!code) { zone.innerHTML = ""; return; }
+    google.script.run.withSuccessHandler(function(res) {
+      if (res && res.ok) {
+        zone.innerHTML = "Connecté : <strong>" + res.nom + "</strong> &middot; <a href=\"#\" onclick=\"seDeconnecter();return false;\">Se déconnecter</a>";
+      } else {
+        try { localStorage.removeItem("spcl_code"); localStorage.removeItem("spcl_nom"); } catch (e) {}
+        zone.innerHTML = "";
+      }
+    }).verifierCode(code);
+  }
+  function seDeconnecter() {
+    try { localStorage.removeItem("spcl_code"); localStorage.removeItem("spcl_nom"); } catch (e) {}
+    location.reload();
+  }
+  document.addEventListener("DOMContentLoaded", afficherStatutConnexion);
 </script>

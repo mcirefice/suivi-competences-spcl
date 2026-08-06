@@ -36,6 +36,11 @@
   <input type="text" id="codeInput2" inputmode="numeric" maxlength="4" placeholder="1234">
   <label for="chapitreQCM">Chapitre à réviser</label>
   <select id="chapitreQCM"></select>
+  <label for="niveauQCM">Niveau</label>
+  <select id="niveauQCM">
+    <option value="Débutant">Débutant — pour progresser vers le niveau A</option>
+    <option value="Avancé">Avancé — avec calculs, pour vérifier une vraie maîtrise</option>
+  </select>
   <button class="principal" onclick="demarrerQuiz()">Commencer le QCM</button>
   <div id="msgChoix"></div>
 </div>
@@ -53,6 +58,7 @@
   <div class="scoreChiffre" id="scoreTexte"></div>
   <p id="scoreMessage" style="font-size:14px;"></p>
   <button class="principal" onclick="location.reload()">Refaire un QCM</button>
+  <a href="<?= scriptUrl ?>" style="display:block;text-align:center;margin-top:12px;font-size:13px;color:#52514e;">← Retour à l'accueil</a>
 </div>
 
 <script>
@@ -61,6 +67,7 @@ var indexQuestion = 0;
 var score = 0;
 var codeActuel2 = "";
 var chapitreActuel = "";
+var niveauActuel = "";
 
 google.script.run.withSuccessHandler(function(chapitres) {
   var sel = document.getElementById("chapitreQCM");
@@ -72,6 +79,15 @@ google.script.run.withSuccessHandler(function(chapitres) {
 }).getChapitresQCM();
 preRemplirCode("codeInput2");
 
+function melanger(tableau) {
+  var t = tableau.slice();
+  for (var i = t.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = t[i]; t[i] = t[j]; t[j] = tmp;
+  }
+  return t;
+}
+
 function demarrerQuiz() {
   var code = document.getElementById("codeInput2").value.trim();
   var msg = document.getElementById("msgChoix");
@@ -79,20 +95,21 @@ function demarrerQuiz() {
   codeActuel2 = code;
   sauvegarderCode(code);
   chapitreActuel = document.getElementById("chapitreQCM").value;
+  niveauActuel = document.getElementById("niveauQCM").value;
   msg.textContent = "Chargement...";
   google.script.run.withSuccessHandler(function(qs) {
     if (!qs || qs.length === 0) {
-      msg.textContent = "Aucune question disponible pour ce chapitre.";
+      msg.textContent = "Aucune question disponible pour ce chapitre et ce niveau.";
       msg.className = "erreur";
       return;
     }
-    questions = qs;
+    questions = melanger(qs);
     indexQuestion = 0;
     score = 0;
     document.getElementById("ecranChoix").classList.add("hidden");
     document.getElementById("ecranQuiz").classList.remove("hidden");
     afficherQuestion();
-  }).getQCM(chapitreActuel);
+  }).getQCM(chapitreActuel, niveauActuel);
 }
 
 function afficherQuestion() {
@@ -102,32 +119,37 @@ function afficherQuestion() {
   document.getElementById("explicationZone").innerHTML = "";
   document.getElementById("btnSuivant").classList.add("hidden");
 
+  var propositions = ["A", "B", "C", "D"].map(function(lettre) {
+    return { texte: q.options[lettre], estCorrecte: (lettre === q.bonneReponse) };
+  });
+  propositions = melanger(propositions);
+
   var zone = document.getElementById("optionsZone");
   zone.innerHTML = "";
-  ["A", "B", "C", "D"].forEach(function(lettre) {
+  propositions.forEach(function(prop, i) {
+    var lettreAffichee = ["A", "B", "C", "D"][i];
     var btn = document.createElement("button");
     btn.className = "optionBtn";
-    btn.textContent = lettre + ". " + q.options[lettre];
-    btn.addEventListener("click", function() { repondre(lettre); });
+    btn.textContent = lettreAffichee + ". " + prop.texte;
+    btn.dataset.correcte = prop.estCorrecte ? "1" : "0";
+    btn.addEventListener("click", function() { repondre(btn, prop.estCorrecte); });
     zone.appendChild(btn);
   });
 }
 
-function repondre(lettre) {
+function repondre(boutonClique, estCorrecte) {
   var q = questions[indexQuestion];
   var boutons = document.querySelectorAll(".optionBtn");
-  boutons.forEach(function(b) { b.disabled = true; });
-  boutons.forEach(function(b, i) {
-    var lettreBtn = ["A", "B", "C", "D"][i];
-    if (lettreBtn === q.bonneReponse) b.classList.add("correcte");
-    else if (lettreBtn === lettre) b.classList.add("incorrecte");
+  boutons.forEach(function(b) {
+    b.disabled = true;
+    if (b.dataset.correcte === "1") b.classList.add("correcte");
+    else if (b === boutonClique) b.classList.add("incorrecte");
   });
-  if (lettre === q.bonneReponse) score++;
+  if (estCorrecte) score++;
 
-  var bonne = (lettre === q.bonneReponse);
   var exp = document.getElementById("explicationZone");
   exp.innerHTML =
-    '<div class="explication"><span class="label">' + (bonne ? "✓ Bonne réponse !" : "✗ Pas tout à fait — la bonne réponse était " + q.bonneReponse + ".") + '</span>' +
+    '<div class="explication"><span class="label">' + (estCorrecte ? "✓ Bonne réponse !" : "✗ Pas tout à fait — regarde la case en vert ci-dessus.") + '</span>' +
     q.explication + '</div>';
   document.getElementById("btnSuivant").classList.remove("hidden");
 }
@@ -151,7 +173,7 @@ function terminerQuiz() {
   else if (pct >= 60) msg = "Pas mal, mais relis les explications des questions ratées avant de continuer.";
   else msg = "Cette partie mérite d'être revue — relis le cours et les explications ci-dessus avant de refaire ton auto-évaluation.";
   document.getElementById("scoreMessage").textContent = msg;
-  google.script.run.enregistrerResultatQCM({ code: codeActuel2, chapitre: chapitreActuel, score: score, total: questions.length });
+  google.script.run.enregistrerResultatQCM({ code: codeActuel2, chapitre: chapitreActuel, niveau: niveauActuel, score: score, total: questions.length });
 }
 </script>
 </body>
