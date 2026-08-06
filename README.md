@@ -51,10 +51,11 @@ Retourne sur le Google Sheet, rafraîchis la page — le menu **« Suivi SPCL »
 ## Workflow au quotidien (ajouter un nouveau module)
 
 1. Crée un nouveau fichier `.html` dans ce dossier (ex. `NouvelOutil.html`), sur le modèle de `PT100Etalonnage.html` (même bandeau, même nav).
-2. Dans `Code.gs`, ajoute une ligne dans l'objet `PAGES` :
+2. Dans `Code.gs`, ajoute une ligne dans le tableau `MODULES` :
    ```js
-   "nouvel-outil": "NouvelOutil",
+   { chapitre: "S&Px", label: "Nom affiché", page: "cle-url", template: "NouvelOutil", type: "outil" },
    ```
+   Utilise `type: "page"` seulement pour des pages générales (comme Auto-évaluation) qui doivent apparaître directement dans le menu principal. Pour un outil lié à une activité, utilise `type: "outil"` — il apparaîtra automatiquement dans le hub **Outils** plutôt que d'encombrer le menu principal.
 3. `git add . && git commit -m "Ajout du module X" && git push`
 4. `clasp push` pour envoyer vers Apps Script.
 5. Dans Apps Script : **Déployer → Gérer les déploiements → ✏️ → Nouvelle version → Déployer** (l'URL ne change pas).
@@ -68,7 +69,10 @@ Le module est alors accessible via `<url du déploiement>?page=nouvel-outil`, et
 | `appsscript.json` | Manifeste Apps Script (obligatoire pour clasp) |
 | `Code.gs` | Backend : routage des pages, gestion élèves/codes, lecture/écriture du Sheet |
 | `Index.html` | Page d'auto-évaluation des compétences |
-| `PT100Etalonnage.html` | Module : faisceau de droites pour l'étalonnage Pt100 (S&P2) |
+| `PT100Etalonnage.html` | Outil : faisceau de droites pour l'étalonnage Pt100 (S&P2) |
+| `Outils.html` | Hub qui liste tous les outils (type "outil"), groupés par chapitre |
+| `TableauDeBord.html` | Vue classe entière pour toi, protégée par mot de passe (défini à la première connexion) |
+| `QCM.html` | QCM de révision (5 questions/chapitre), correction détaillée immédiate après chaque réponse |
 | `CodesSource.html` | Module : bibliothèque de codes Arduino/Python, recherche + copie en un clic |
 | `Nav.html` | Fragment de navigation partagé (barre horizontale unique), inclus dans chaque page |
 | `Style.html` | Styles CSS partagés (couleurs, fond, boutons...) — modifie ici pour changer le rendu de toutes les pages d'un coup |
@@ -81,3 +85,12 @@ Le module est alors accessible via `<url du déploiement>?page=nouvel-outil`, et
 - **Réponses** : rempli automatiquement à chaque auto-évaluation.
 - **Réponses_Outils** : rempli automatiquement par les modules type "outil" (ex. Pt100), au format horodatage / code / outil / données JSON.
 - **Codes** : Chapitre, Langage (Arduino/Python), Titre, Description, Code — bibliothèque de codes affichée dans le module *Codes Arduino / Python*. **Tu peux ajouter une ligne directement dans cet onglet, aucun besoin de repasser par GitHub/clasp** — le module la récupère automatiquement à chaque ouverture. Pour le remplissage initial (S&P1 + S&P2), utilise le menu **Suivi SPCL → Initialiser la bibliothèque de codes**.
+- **QCM** : Chapitre, Question, OptionA-D, BonneReponse (A/B/C/D), Explication, **Niveau** (Débutant/Avancé, dernière colonne) — **tu peux ajouter des questions directement dans cet onglet**, aucun redéploiement nécessaire. Remplissage initial via **Suivi SPCL → Initialiser les QCM** (ça migre aussi automatiquement les anciennes questions vers "Débutant" si tu avais déjà lancé cette action avant l'ajout du niveau).
+
+## Tableau de bord enseignant
+
+Le module **Tableau de bord (prof)** te montre toute la classe, chapitre par chapitre, avec le dernier niveau (A/B/C/D) de chaque élève sur chaque compétence — sans avoir à ouvrir le Sheet.
+
+Il est protégé par un **mot de passe séparé des codes élèves**. Ce mot de passe doit être **défini explicitement par toi**, depuis le Sheet : menu **Suivi SPCL → Définir le mot de passe du Tableau de bord**. Tant qu'il n'a pas été défini de cette façon, la page refuse tout accès — personne ne peut plus "prendre" le mot de passe en le devinant ou en tapant n'importe quoi en premier. Tu peux le changer à tout moment en relançant la même action de menu.
+
+Les élèves, eux, ont un onglet **« Mon suivi »** dans la page Auto-évaluation (à côté de "Nouvelle auto-évaluation"), qui leur montre leur propre historique — mais uniquement leurs résultats, jamais ceux des autres.

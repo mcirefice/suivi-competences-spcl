@@ -41,6 +41,7 @@ function onOpen() {
     .addItem("Initialiser le référentiel (S&P1 + S&P2)", "seedReferentiel")
     .addItem("Initialiser la bibliothèque de codes (S&P1 + S&P2)", "seedCodes")
     .addItem("Initialiser les QCM (S&P1 + S&P2)", "seedQCM")
+    .addItem("Définir le mot de passe du Tableau de bord", "definirMotDePasseProf")
     .addToUi();
 }
 
@@ -375,11 +376,23 @@ function verifierMotDePasseProf(motDePasse) {
   if (!motDePasse) return false;
   const props = PropertiesService.getScriptProperties();
   const stored = props.getProperty(TEACHER_PASSWORD_PROP);
-  if (!stored) {
-    props.setProperty(TEACHER_PASSWORD_PROP, motDePasse);
-    return true;
-  }
+  if (!stored) return false; // Aucun mot de passe défini : accès refusé tant que le prof ne l'a pas créé lui-même.
   return stored === motDePasse;
+}
+
+function definirMotDePasseProf() {
+  const ui = SpreadsheetApp.getUi();
+  const props = PropertiesService.getScriptProperties();
+  const existe = !!props.getProperty(TEACHER_PASSWORD_PROP);
+  const message = existe
+    ? "Un mot de passe est déjà défini. Tape le nouveau pour le remplacer :"
+    : "Choisis le mot de passe du Tableau de bord (prof) :";
+  const resp = ui.prompt("Mot de passe du Tableau de bord", message, ui.ButtonSet.OK_CANCEL);
+  if (resp.getSelectedButton() !== ui.Button.OK) return;
+  const mdp = resp.getResponseText().trim();
+  if (!mdp) { ui.alert("Mot de passe vide, rien n'a été changé."); return; }
+  props.setProperty(TEACHER_PASSWORD_PROP, mdp);
+  ui.alert("Mot de passe du Tableau de bord enregistré.");
 }
 
 function getTableauDeBord(motDePasse) {
