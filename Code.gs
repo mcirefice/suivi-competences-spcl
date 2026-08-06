@@ -22,6 +22,7 @@ const MODULES = [
   { chapitre: "Général",  label: "QCM de révision",       page: "qcm",               template: "QCM",              type: "page", profOnly: false },
   { chapitre: "Général",  label: "Tableau de bord (prof)", page: "tableau-de-bord",   template: "TableauDeBord",    type: "page", profOnly: true },
   { chapitre: "S&P2",     label: "Étalonnage Pt100",       page: "pt100-etalonnage",  template: "PT100Etalonnage",  type: "outil", profOnly: false },
+  { chapitre: "S&P3",     label: "Simulateur de chaudière", page: "chaudiere",         template: "ChaudiereSimulateur", type: "outil", profOnly: false },
 ];
 
 function getModules(code) {
