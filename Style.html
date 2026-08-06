@@ -79,6 +79,7 @@
   button.principal:hover { background: #2c2c2a; }
   .hidden { display: none !important; }
   #statutConnexion a { color: #c9c9c9; text-decoration: underline; }
+  #statutConnexion .nomEleve { color: #ff5c5c; font-size: 16px; font-weight: bold; }
 </style>
 <script>
   function sauvegarderCode(code, nom) {
@@ -105,7 +106,7 @@
     if (!code) { zone.innerHTML = ""; return; }
     google.script.run.withSuccessHandler(function(res) {
       if (res && res.ok) {
-        zone.innerHTML = "Connecté : <strong>" + res.nom + "</strong> &middot; <a href=\"#\" onclick=\"seDeconnecter();return false;\">Se déconnecter</a>";
+        zone.innerHTML = "Connecté : <span class=\"nomEleve\">" + res.nom + "</span> &middot; <a href=\"#\" onclick=\"seDeconnecter();return false;\">Se déconnecter</a>";
       } else {
         try { localStorage.removeItem("spcl_code"); localStorage.removeItem("spcl_nom"); } catch (e) {}
         zone.innerHTML = "";
@@ -114,7 +115,7 @@
   }
   function seDeconnecter() {
     try { localStorage.removeItem("spcl_code"); localStorage.removeItem("spcl_nom"); } catch (e) {}
-    location.reload();
+    window.location.href = "<?= scriptUrl ?>";
   }
   document.addEventListener("DOMContentLoaded", afficherStatutConnexion);
 </script>
