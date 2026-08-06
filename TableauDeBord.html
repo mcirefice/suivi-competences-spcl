@@ -55,9 +55,12 @@
 </div>
 
 <div id="contenu" class="hidden">
-  <div style="margin-bottom:16px;">
-    <label for="chapitreDashboard">Chapitre</label>
-    <select id="chapitreDashboard" onchange="afficherTableau()"></select>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <div>
+      <label for="chapitreDashboard" style="margin-bottom:4px;">Chapitre</label>
+      <select id="chapitreDashboard" onchange="afficherTableau()"></select>
+    </div>
+    <a href="#" onclick="seDeconnecterProf();return false;" style="font-size:13px;color:#52514e;">Se déconnecter (mode prof)</a>
   </div>
   <div class="carte resumeClasse">
     <div id="resumeZone"></div>
@@ -83,12 +86,21 @@
 <script>
 var donneesDashboard = null;
 
+window.addEventListener("DOMContentLoaded", function() {
+  var mdp = mdpProfMemorise();
+  if (mdp) {
+    document.getElementById("mdpInput").value = mdp;
+    connecterProf();
+  }
+});
+
 function connecterProf() {
   var mdp = document.getElementById("mdpInput").value;
   var msg = document.getElementById("msgMdp");
   if (!mdp) { msg.textContent = "Entre un mot de passe."; msg.className = "erreur"; return; }
   msg.textContent = "Vérification...";
   msg.className = "";
+  sauvegarderMdpProf(mdp);
   google.script.run.withSuccessHandler(function(res) {
     if (!res.ok) {
       msg.textContent = res.message || "Erreur.";

@@ -54,10 +54,24 @@
 <?!= include('Nav.html', {scriptUrl: scriptUrl, currentPage: currentPage}); ?>
 
 <div id="ecranCode" class="carte">
-  <label for="codeInput">Ton code</label>
-  <input type="text" id="codeInput" inputmode="numeric" maxlength="4" placeholder="1234">
-  <button class="principal" onclick="connecter()">Se connecter</button>
-  <div id="msgCode"></div>
+  <div style="display:flex;gap:8px;margin-bottom:16px;">
+    <button id="ongletEleve" class="onglet actif" onclick="afficherRole('eleve')" style="flex:1;">Je suis élève</button>
+    <button id="ongletProf" class="onglet" onclick="afficherRole('prof')" style="flex:1;">Je suis professeur</button>
+  </div>
+
+  <div id="blocRoleEleve">
+    <label for="codeInput">Ton code</label>
+    <input type="text" id="codeInput" inputmode="numeric" maxlength="4" placeholder="1234">
+    <button class="principal" onclick="connecter()">Se connecter</button>
+    <div id="msgCode"></div>
+  </div>
+
+  <div id="blocRoleProf" class="hidden">
+    <label for="mdpProfInput">Mot de passe professeur</label>
+    <input type="text" id="mdpProfInput" placeholder="•••••">
+    <button class="principal" onclick="connecterProfAccueil()">Accéder au tableau de bord</button>
+    <div id="msgProf"></div>
+  </div>
 </div>
 
 <div id="ecranEval" class="carte hidden">
@@ -184,6 +198,30 @@ function chargerSuivi() {
       zone.appendChild(bloc);
     });
   }).getSuiviEleve(codeActuel);
+}
+
+function afficherRole(role) {
+  document.getElementById("ongletEleve").className = "onglet" + (role === "eleve" ? " actif" : "");
+  document.getElementById("ongletProf").className = "onglet" + (role === "prof" ? " actif" : "");
+  document.getElementById("blocRoleEleve").className = (role === "eleve") ? "" : "hidden";
+  document.getElementById("blocRoleProf").className = (role === "prof") ? "" : "hidden";
+}
+
+function connecterProfAccueil() {
+  var mdp = document.getElementById("mdpProfInput").value;
+  var msg = document.getElementById("msgProf");
+  if (!mdp) { msg.textContent = "Entre le mot de passe."; msg.className = "erreur"; return; }
+  msg.textContent = "Vérification...";
+  msg.className = "";
+  google.script.run.withSuccessHandler(function(res) {
+    if (res.ok) {
+      sauvegarderMdpProf(mdp);
+      window.location.href = "<?= scriptUrl ?>?page=tableau-de-bord";
+    } else {
+      msg.textContent = "Mot de passe incorrect.";
+      msg.className = "erreur";
+    }
+  }).verifierAccesProf(mdp);
 }
 
 function connecter() {

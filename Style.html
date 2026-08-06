@@ -117,5 +117,15 @@
     try { localStorage.removeItem("spcl_code"); localStorage.removeItem("spcl_nom"); } catch (e) {}
     window.location.href = "<?= scriptUrl ?>";
   }
+  function sauvegarderMdpProf(mdp) {
+    try { sessionStorage.setItem("spcl_mdp_prof", mdp); } catch (e) {}
+  }
+  function mdpProfMemorise() {
+    try { return sessionStorage.getItem("spcl_mdp_prof") || ""; } catch (e) { return ""; }
+  }
+  function seDeconnecterProf() {
+    try { sessionStorage.removeItem("spcl_mdp_prof"); } catch (e) {}
+    window.location.href = "<?= scriptUrl ?>";
+  }
   document.addEventListener("DOMContentLoaded", afficherStatutConnexion);
 </script>

@@ -380,6 +380,10 @@ function verifierMotDePasseProf(motDePasse) {
   return stored === motDePasse;
 }
 
+function verifierAccesProf(motDePasse) {
+  return { ok: verifierMotDePasseProf(motDePasse) };
+}
+
 function definirMotDePasseProf() {
   const ui = SpreadsheetApp.getUi();
   const props = PropertiesService.getScriptProperties();

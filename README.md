@@ -87,6 +87,14 @@ Le module est alors accessible via `<url du déploiement>?page=nouvel-outil`, et
 - **Codes** : Chapitre, Langage (Arduino/Python), Titre, Description, Code — bibliothèque de codes affichée dans le module *Codes Arduino / Python*. **Tu peux ajouter une ligne directement dans cet onglet, aucun besoin de repasser par GitHub/clasp** — le module la récupère automatiquement à chaque ouverture. Pour le remplissage initial (S&P1 + S&P2), utilise le menu **Suivi SPCL → Initialiser la bibliothèque de codes**.
 - **QCM** : Chapitre, Question, OptionA-D, BonneReponse (A/B/C/D), Explication, **Niveau** (Débutant/Avancé, dernière colonne) — **tu peux ajouter des questions directement dans cet onglet**, aucun redéploiement nécessaire. Remplissage initial via **Suivi SPCL → Initialiser les QCM** (ça migre aussi automatiquement les anciennes questions vers "Débutant" si tu avais déjà lancé cette action avant l'ajout du niveau).
 
+## Connexion
+
+La page d'accueil propose maintenant un choix explicite **« Je suis élève »** / **« Je suis professeur »** :
+- **Élève** : code à 4 chiffres, mémorisé indéfiniment sur l'appareil (`localStorage`) — l'élève n'a besoin de se reconnecter qu'une seule fois par appareil, avec un lien "Se déconnecter" visible sous le bandeau sur toutes les pages.
+- **Professeur** : mot de passe, mémorisé uniquement le temps que l'onglet du navigateur reste ouvert (`sessionStorage`) — redemandé à chaque nouvelle session, plus sûr sur un iPad partagé entre élèves. Un lien "Se déconnecter (mode prof)" est disponible sur le Tableau de bord.
+
+L'onglet **Tableau de bord** disparaît automatiquement du menu dès qu'un élève est connecté sur l'appareil, pour éviter toute confusion — mais la vraie protection reste le mot de passe, qui bloque l'accès aux données même si quelqu'un tape l'adresse directement.
+
 ## Tableau de bord enseignant
 
 Le module **Tableau de bord (prof)** te montre toute la classe, chapitre par chapitre, avec le dernier niveau (A/B/C/D) de chaque élève sur chaque compétence — sans avoir à ouvrir le Sheet.
