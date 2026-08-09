@@ -18,11 +18,19 @@
   .onglets { display: flex; gap: 8px; margin-bottom: 18px; }
   .onglets button { flex: 1; }
   table.tabDoc3 { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
-  table.tabDoc3 th, table.tabDoc3 td { border: 1px solid #dcdbd2; padding: 6px 8px; text-align: center; }
-  table.tabDoc3 th { background: #f6f5f1; font-size: 11px; }
+  table.tabDoc3 th, table.tabDoc3 td { border: 1px solid #dcdbd2; padding: 5px 6px; text-align: center; }
+  table.tabDoc3 th { background: #f6f5f1; font-size: 10.5px; }
   table.tabDoc3 td.constituant { text-align: left; font-weight: bold; }
   table.tabDoc3 tr.totalRow td { font-weight: bold; background: #eeedfe; }
-  .cellCalc { color: #0f6e56; font-weight: bold; }
+  table.tabDoc3 input { width: 64px; height: 28px; padding: 0 4px; font-size: 12px; text-align: center; }
+  .champVerif.correct { background: #e3f3ea !important; border-color: #3e9b5c !important; }
+  .champVerif.incorrect { background: #fbe9e7 !important; border-color: #d64545 !important; }
+  .donneesFixes { background: #f6f5f1; border-radius: 8px; padding: 12px 14px; font-size: 13px; line-height: 1.6; margin-bottom: 14px; }
+  .donneesFixes b { color: #0b0b0b; }
+  .btnSecondaire { background: #efeee7; border-color: #dcdbd2; color: #52514e; font-size: 13px; }
+  .scoreBox { font-weight: bold; margin-top: 10px; }
+  .champQuestion { margin-bottom: 12px; }
+  .champQuestion label { font-size: 13px; margin-bottom: 2px; }
 </style>
 </head>
 <body>
@@ -30,42 +38,60 @@
 <?!= include('Banniere.html', {titre: titre}); ?>
 <?!= include('Nav.html', {scriptUrl: scriptUrl, currentPage: currentPage}); ?>
 
-<p style="font-size:13px;color:#52514e;margin-top:-8px;">Aucune chaudière réelle en labo (sécurité, coût) — ce simulateur reprend l'exercice de ton document (chaudière à granulés + tableau de récupération d'énergie des fumées), avec des valeurs modifiables pour explorer.</p>
+<p style="font-size:13px;color:#52514e;margin-top:-8px;">Aucune chaudière réelle en labo — reprends l'exercice avec ces données, comme sur ton document papier. Le mode exploration (curseurs) n'est là qu'une fois le calcul fait, pour visualiser d'autres cas.</p>
 
 <div class="carte" style="padding:10px 14px;">
-<svg viewBox="0 0 700 300" width="100%" style="max-height:280px;" role="img" aria-label="Schéma de principe d'un chauffage central avec chaudière à granulés de bois">
+<svg viewBox="0 0 700 340" width="100%" style="max-height:300px;" role="img" aria-label="Schéma de principe d'un chauffage central avec chaudière à granulés de bois et condenseur sur les fumées">
 <title>Chauffage central avec chaudière à granulés de bois</title>
-<desc>Silo à granulés relié par une vis sans fin à une chaudière, avec départ et retour du circuit de chauffage vers un radiateur, et évacuation des fumées par la cheminée</desc>
-<rect x="20" y="130" width="80" height="100" fill="#efeee7" stroke="#8a8980" stroke-width="1.5"/>
-<polygon points="20,130 100,130 60,90" fill="#efeee7" stroke="#8a8980" stroke-width="1.5"/>
-<text x="60" y="250" text-anchor="middle" font-size="11" fill="#52514e">Silo à granulés</text>
-<path d="M100 210 L 130 210" stroke="#8a8980" stroke-width="2" marker-end="url(#fleche)"/>
-<text x="115" y="222" text-anchor="middle" font-size="9" fill="#8a8980"></text>
-<text x="115" y="200" text-anchor="middle" font-size="9" fill="#8a8980">vis</text>
-<rect x="130" y="80" width="180" height="160" rx="10" fill="#fff" stroke="#0b0b0b" stroke-width="2"/>
-<text x="220" y="66" text-anchor="middle" font-size="13" font-weight="bold" fill="#0b0b0b">Chaudière</text>
-<rect x="145" y="160" width="70" height="60" rx="6" fill="#fbe3d5" stroke="#d9622e" stroke-width="1.5"/>
-<text x="180" y="195" text-anchor="middle" font-size="11" fill="#a94a1a">Brûleur</text>
-<rect x="230" y="100" width="65" height="120" rx="6" fill="#e1eef7" stroke="#378add" stroke-width="1.5"/>
-<text x="262" y="160" text-anchor="middle" font-size="11" fill="#215a8f" transform="rotate(-90 262 160)">Échangeur</text>
-<rect x="255" y="30" width="24" height="55" fill="#c9c8bd"/>
-<path id="fumee" d="M267 30 C 260 10, 280 5, 267 -15" stroke="#8a8980" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.6"/>
-<text id="labelFumees" x="267" y="20" text-anchor="middle" font-size="11" font-weight="bold" fill="#a32d2d">200 °C</text>
-<circle id="goutte1" class="goutte" cx="248" cy="95" r="3" fill="#378add" opacity="0"/>
-<circle id="goutte2" class="goutte" cx="267" cy="100" r="3" fill="#378add" opacity="0"/>
-<circle id="goutte3" class="goutte" cx="286" cy="95" r="3" fill="#378add" opacity="0"/>
-<text id="labelCondenseur" x="267" y="252" text-anchor="middle" font-size="10" font-weight="bold" fill="#8a8980"></text>
-<path d="M310 110 L 420 110" stroke="#d64545" stroke-width="3" marker-end="url(#flecheRouge)"/>
-<text x="365" y="100" text-anchor="middle" font-size="11" fill="#a32d2d">Circuit d'eau chaude</text>
-<path d="M420 210 L 310 210" stroke="#378add" stroke-width="3" marker-end="url(#flecheBleue)"/>
-<text x="365" y="228" text-anchor="middle" font-size="11" fill="#215a8f">Retour</text>
-<rect x="420" y="100" width="90" height="120" rx="6" fill="#fff" stroke="#0b0b0b" stroke-width="1.5"/>
-<line x1="435" y1="100" x2="435" y2="220" stroke="#c3c2b7" stroke-width="2"/>
-<line x1="450" y1="100" x2="450" y2="220" stroke="#c3c2b7" stroke-width="2"/>
-<line x1="465" y1="100" x2="465" y2="220" stroke="#c3c2b7" stroke-width="2"/>
-<line x1="480" y1="100" x2="480" y2="220" stroke="#c3c2b7" stroke-width="2"/>
-<line x1="495" y1="100" x2="495" y2="220" stroke="#c3c2b7" stroke-width="2"/>
-<text x="465" y="240" text-anchor="middle" font-size="11" fill="#52514e">Radiateur</text>
+<desc>Silo à granulés relié par une vis sans fin à une chaudière, avec un condenseur sur le trajet des fumées qui s'active pour récupérer la chaleur latente de l'eau condensée, départ et retour du circuit de chauffage vers un radiateur, et évacuation des fumées par la cheminée</desc>
+
+<rect x="20" y="150" width="80" height="100" fill="#efeee7" stroke="#8a8980" stroke-width="1.5"/>
+<polygon points="20,150 100,150 60,110" fill="#efeee7" stroke="#8a8980" stroke-width="1.5"/>
+<text x="60" y="270" text-anchor="middle" font-size="11" fill="#52514e">Silo à granulés</text>
+<path d="M100 225 L 130 225" stroke="#8a8980" stroke-width="2" marker-end="url(#fleche)"/>
+
+<rect x="130" y="65" width="180" height="200" rx="10" fill="#fff" stroke="#0b0b0b" stroke-width="2"/>
+<text x="220" y="50" text-anchor="middle" font-size="13" font-weight="bold" fill="#0b0b0b">Chaudière</text>
+
+<rect x="145" y="195" width="70" height="55" rx="6" fill="#fbe3d5" stroke="#d9622e" stroke-width="1.5"/>
+<text x="180" y="227" text-anchor="middle" font-size="11" fill="#a94a1a">Brûleur</text>
+
+<rect x="230" y="150" width="65" height="95" rx="6" fill="#e1eef7" stroke="#378add" stroke-width="1.5"/>
+<text x="262" y="197" text-anchor="middle" font-size="11" fill="#215a8f" transform="rotate(-90 262 197)">Échangeur</text>
+
+<!-- Condenseur : boite dediee sur le trajet des fumees, s'active visuellement -->
+<g id="groupeCondenseur">
+<rect id="condenseurBox" x="222" y="80" width="80" height="55" rx="6" fill="#efeee7" stroke="#c3c2b7" stroke-width="1.5"/>
+<text id="labelCondenseur" x="262" y="102" text-anchor="middle" font-size="10" font-weight="bold" fill="#8a8980">Condenseur</text>
+<text id="labelCondenseurEtat" x="262" y="115" text-anchor="middle" font-size="9" fill="#8a8980">inactif</text>
+<circle id="goutte1" class="goutte" cx="240" cy="128" r="3" fill="#378add" opacity="0"/>
+<circle id="goutte2" class="goutte" cx="262" cy="132" r="3" fill="#378add" opacity="0"/>
+<circle id="goutte3" class="goutte" cx="284" cy="128" r="3" fill="#378add" opacity="0"/>
+
+<!-- Tuyau d'evacuation de l'eau condensee -->
+<path id="tuyauEvac" d="M240 138 L 240 250 L 150 250 L 150 262" stroke="#378add" stroke-width="2.5" fill="none" opacity="0"/>
+<circle id="goutteEvac" cx="150" cy="266" r="3" fill="#378add" opacity="0"/>
+<text id="labelEvac" x="150" y="282" text-anchor="middle" font-size="9" font-weight="bold" fill="#378add" opacity="0">Eau condensée ~20°C</text>
+</g>
+
+<!-- Cheminee / fumees, au dessus du condenseur -->
+<rect x="250" y="35" width="24" height="45" fill="#c9c8bd"/>
+<path id="fumee" d="M262 35 C 255 15, 275 10, 262 -15" stroke="#8a8980" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.6"/>
+<text id="labelFumees" x="262" y="25" text-anchor="middle" font-size="11" font-weight="bold" fill="#a32d2d">200 °C</text>
+
+<path d="M310 165 L 420 165" stroke="#d64545" stroke-width="3" marker-end="url(#flecheRouge)"/>
+<text x="365" y="155" text-anchor="middle" font-size="11" fill="#a32d2d">Circuit d'eau chaude</text>
+<path d="M420 235 L 310 235" stroke="#378add" stroke-width="3" marker-end="url(#flecheBleue)"/>
+<text x="365" y="253" text-anchor="middle" font-size="11" fill="#215a8f">Retour</text>
+
+<rect x="420" y="125" width="90" height="120" rx="6" fill="#fff" stroke="#0b0b0b" stroke-width="1.5"/>
+<line x1="435" y1="125" x2="435" y2="245" stroke="#c3c2b7" stroke-width="2"/>
+<line x1="450" y1="125" x2="450" y2="245" stroke="#c3c2b7" stroke-width="2"/>
+<line x1="465" y1="125" x2="465" y2="245" stroke="#c3c2b7" stroke-width="2"/>
+<line x1="480" y1="125" x2="480" y2="245" stroke="#c3c2b7" stroke-width="2"/>
+<line x1="495" y1="125" x2="495" y2="245" stroke="#c3c2b7" stroke-width="2"/>
+<text x="465" y="262" text-anchor="middle" font-size="11" fill="#52514e">Radiateur</text>
+
 <defs>
 <marker id="fleche" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#8a8980" stroke-width="1.5"/></marker>
 <marker id="flecheRouge" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#d64545" stroke-width="1.5"/></marker>
@@ -79,50 +105,111 @@
   <button id="ongletFumees" class="onglet" onclick="afficherOnglet('fumees')">Récupération d'énergie des fumées</button>
 </div>
 
+<!-- ===================== ONGLET 1 : CHAUDIERE A GRANULES ===================== -->
 <div id="blocDim" class="carte">
-  <p style="font-size:13px;color:#52514e;margin-top:0;">Un propriétaire remplace sa chaudière à fioul par une chaudière à granulés de bois. Reprends les données de ton document (modifiables ci-dessous pour explorer d'autres cas).</p>
-  <div class="grille">
-    <div><label for="pertes">Pertes thermiques à compenser (kWh/an)</label><input type="number" id="pertes" value="35000" step="500"></div>
-    <div><label for="rendement">Rendement de la chaudière (%)</label><input type="number" id="rendement" value="80" step="1"></div>
+
+  <div id="dimExercice">
+    <div class="donneesFixes">
+      Un propriétaire remplace sa chaudière à fioul par une chaudière à granulés de bois (30 kW, rendement 80%).<br>
+      <b>Pertes thermiques à compenser :</b> 35 000 kWh/an &middot;
+      <b>1 kg de granulés libère :</b> 4,8 kWh &middot;
+      <b>Masse volumique des granulés :</b> 650 kg/m³<br>
+      <b>Surface prise en compte pour le label BBC :</b> 350 m² &middot;
+      <b>Coefficient énergie primaire (bois) :</b> 0,6 &middot;
+      <b>Seuil BBC :</b> 80 kWh/m²/an
+    </div>
+
+    <div class="champQuestion">
+      <label for="q3masse">Q3 — Masse de granulés nécessaire pour une année de chauffage (kg)</label>
+      <input type="number" id="q3masse" step="1">
+    </div>
+    <div class="champQuestion">
+      <label for="q4volume">Q4 — Volume minimum du silo (m³)</label>
+      <input type="number" id="q4volume" step="0.01">
+    </div>
+    <div class="champQuestion">
+      <label for="q6energie">Q6 — Énergie primaire consommée pour le chauffage (kWh/m²/an)</label>
+      <input type="number" id="q6energie" step="0.1">
+    </div>
+    <div class="champQuestion">
+      <label for="q6classe">Quelle classe énergétique (A à G) correspond à cette valeur ?</label>
+      <select id="q6classe">
+        <option value="">—</option>
+        <option>A</option><option>B</option><option>C</option><option>D</option>
+        <option>E</option><option>F</option><option>G</option>
+      </select>
+    </div>
+
+    <button class="principal" onclick="verifierDim()">Vérifier mes réponses</button>
+    <div id="scoreDim" class="scoreBox"></div>
+    <button class="btnSecondaire" onclick="toggleExplorationDim()" style="margin-top:14px;">Passer en mode exploration (curseurs)</button>
   </div>
-  <div class="grille">
-    <div><label for="pci">1 kg de granulés libère (kWh)</label><input type="number" id="pci" value="4.8" step="0.1"></div>
-    <div><label for="densite">Masse volumique des granulés (kg/m³)</label><input type="number" id="densite" value="650" step="10"></div>
+
+  <div id="dimExploration" class="hidden">
+    <p style="font-size:13px;color:#52514e;margin-top:0;">Modifie librement les données pour explorer d'autres scénarios.</p>
+    <div class="grille">
+      <div><label for="pertes">Pertes thermiques à compenser (kWh/an)</label><input type="number" id="pertes" value="35000" step="500"></div>
+      <div><label for="rendement">Rendement de la chaudière (%)</label><input type="number" id="rendement" value="80" step="1"></div>
+    </div>
+    <div class="grille">
+      <div><label for="pci">1 kg de granulés libère (kWh)</label><input type="number" id="pci" value="4.8" step="0.1"></div>
+      <div><label for="densite">Masse volumique des granulés (kg/m³)</label><input type="number" id="densite" value="650" step="10"></div>
+    </div>
+    <div class="grille">
+      <div><label for="surface">Surface prise en compte pour le label BBC (m²)</label><input type="number" id="surface" value="350" step="10"></div>
+      <div><label for="coefPrimaire">Coefficient énergie primaire</label><input type="number" id="coefPrimaire" value="0.6" step="0.05"></div>
+    </div>
+    <div id="resultatsDim"></div>
+    <button class="btnSecondaire" onclick="toggleExplorationDim()" style="margin-top:14px;">← Revenir à l'exercice</button>
   </div>
-  <div class="grille">
-    <div><label for="surface">Surface prise en compte pour le label BBC (m²)</label><input type="number" id="surface" value="350" step="10"></div>
-    <div><label for="coefPrimaire">Coefficient énergie primaire (bois)</label><input type="number" id="coefPrimaire" value="0.6" step="0.05"></div>
-  </div>
-  <div id="resultatsDim"></div>
 </div>
 
+<!-- ===================== ONGLET 2 : RECUPERATION FUMEES ===================== -->
 <div id="blocFumees" class="carte hidden">
-  <p style="font-size:13px;color:#52514e;margin-top:0;">Reprend le Document 3 de ton cours : refroidissement des gaz issus de la combustion de 1 kg de méthane, de la température de sortie de chaudière jusqu'à l'évacuation. Fais varier la température de sortie des fumées pour voir l'effet sur l'énergie récupérable.</p>
-  <label for="tempSortie">Température de sortie des fumées (°C)</label>
-  <input type="range" id="tempSortie" min="30" max="250" value="200" oninput="calculerFumees()">
-  <div class="resultat"><span class="valeur" id="valTempSortie">200 °C</span><div class="label">Chaudière classique : ~200°C — Chaudière à condensation : ~55°C</div></div>
 
-  <table class="tabDoc3" id="tableauFumees">
-    <thead>
-      <tr><th>Constituant</th><th>Récupération</th><th>masse (kg)</th><th>Cp (J.kg⁻¹.K⁻¹)</th><th>Δθ (°C)</th><th>L (J.kg⁻¹)</th><th>E récupérée (MJ)</th></tr>
-    </thead>
-    <tbody id="corpsTableauFumees"></tbody>
-  </table>
-  <div id="resultatsFumees"></div>
-  <p style="font-size:12px;color:#8a8980;margin-top:10px;">Modèle : combustion de 1 kg de méthane → 2,75 kg CO2 + 2,25 kg H2O + 14 kg N2 (Document 3). L'eau se refroidit d'abord à l'état gazeux, se condense à 100°C (chaleur latente 2,26.10⁶ J.kg⁻¹), puis continue à se refroidir à l'état liquide jusqu'à la température de sortie choisie.</p>
+  <div id="fumeesExercice">
+    <div class="donneesFixes">
+      Combustion de <b>1 kg de méthane</b>. Les fumées passent d'une sortie à <b>200°C</b> (chaudière classique) à <b>55°C</b> (chaudière à condensation). L'eau condensée est ensuite évacuée à <b>20°C</b>.<br>
+      Rappel : Q = m.Cp.Δθ (sans changement d'état) &nbsp;|&nbsp; Q = m.L (avec changement d'état), L(H2O) = 2,26.10⁶ J.kg⁻¹
+    </div>
+
+    <table class="tabDoc3">
+      <thead><tr><th>Constituant</th><th>Récupération</th><th>masse (kg)</th><th>Cp (J.kg⁻¹.K⁻¹)</th><th>Δθ (°C)</th><th>E récupérée (MJ)</th></tr></thead>
+      <tbody id="corpsExerciceFumees"></tbody>
+    </table>
+    <button class="principal" onclick="verifierFumees()" style="margin-top:14px;">Vérifier le tableau</button>
+    <div id="scoreFumees" class="scoreBox"></div>
+    <button class="btnSecondaire" onclick="toggleExplorationFumees()" style="margin-top:14px;">Passer en mode exploration (curseur)</button>
+  </div>
+
+  <div id="fumeesExploration" class="hidden">
+    <p style="font-size:13px;color:#52514e;margin-top:0;">Fais varier la température de sortie des fumées pour voir l'effet sur l'énergie récupérable.</p>
+    <label for="tempSortie">Température de sortie des fumées (°C)</label>
+    <input type="range" id="tempSortie" min="30" max="250" value="200" oninput="calculerFumeesExploration()">
+    <div class="resultat"><span class="valeur" id="valTempSortie">200 °C</span></div>
+    <table class="tabDoc3" id="tableauFumeesExploration">
+      <thead><tr><th>Constituant</th><th>Récupération</th><th>masse (kg)</th><th>Cp (J.kg⁻¹.K⁻¹)</th><th>Δθ (°C)</th><th>L (J.kg⁻¹)</th><th>E récupérée (MJ)</th></tr></thead>
+      <tbody id="corpsTableauFumees"></tbody>
+    </table>
+    <div id="resultatsFumees"></div>
+    <button class="btnSecondaire" onclick="toggleExplorationFumees()" style="margin-top:14px;">← Revenir à l'exercice</button>
+  </div>
 </div>
 
 <script>
+// ============================================================
+// ONGLETS PRINCIPAUX
+// ============================================================
 function afficherOnglet(nom) {
   document.getElementById("ongletDim").className = "onglet" + (nom === "dim" ? " actif" : "");
   document.getElementById("ongletFumees").className = "onglet" + (nom === "fumees" ? " actif" : "");
   document.getElementById("blocDim").className = "carte" + (nom === "dim" ? "" : " hidden");
   document.getElementById("blocFumees").className = "carte" + (nom === "fumees" ? "" : " hidden");
+  document.getElementById("groupeCondenseur").style.opacity = (nom === "fumees") ? "1" : "0";
   if (nom === "fumees") {
-    calculerFumees();
+    majSchemaFumees(55, true); // état par défaut de l'exercice : fumées à 55°C, condenseur actif
   } else {
-    majSchemaFumees(200);
-    document.getElementById("labelCondenseur").textContent = "";
+    majSchemaFumees(200, false); // chaudière à granulés classique : pas de condenseur dans ce scénario
   }
 }
 
@@ -131,12 +218,53 @@ function classeEnergetique(consoPrimaire) {
     { nom: "A", max: 50 }, { nom: "B", max: 90 }, { nom: "C", max: 150 },
     { nom: "D", max: 230 }, { nom: "E", max: 330 }, { nom: "F", max: 450 }, { nom: "G", max: 9999 }
   ];
-  for (var i = 0; i < classes.length; i++) {
-    if (consoPrimaire <= classes[i].max) return { classe: classes[i].nom, index: i, total: classes.length };
-  }
+  for (var i = 0; i < classes.length; i++) if (consoPrimaire <= classes[i].max) return { classe: classes[i].nom, index: i, total: classes.length };
   return { classe: "G", index: 6, total: classes.length };
 }
 
+// ============================================================
+// ONGLET 1 — EXERCICE (chaudière à granulés, valeurs fixes du document)
+// ============================================================
+function toggleExplorationDim() {
+  var exo = document.getElementById("dimExercice");
+  var exp = document.getElementById("dimExploration");
+  var enExploration = exp.className.indexOf("hidden") === -1;
+  exo.className = enExploration ? "" : "hidden";
+  exp.className = enExploration ? "hidden" : "";
+  if (!enExploration) calculerDimensionnement();
+}
+
+function verifierDim() {
+  var pertes = 35000, rendement = 0.8, pci = 4.8, densite = 650, surface = 350, coefPrimaire = 0.6;
+  var energieFinale = pertes / rendement;
+  var masseAttendue = energieFinale / pci;
+  var volumeAttendu = masseAttendue / densite;
+  var consoAttendue = (energieFinale / surface) * coefPrimaire;
+  var classeAttendue = classeEnergetique(consoAttendue).classe;
+
+  var score = 0, total = 4;
+  score += verifierChamp("q3masse", masseAttendue, 0.05);
+  score += verifierChamp("q4volume", volumeAttendu, 0.05);
+  score += verifierChamp("q6energie", consoAttendue, 0.05);
+  var classeOk = document.getElementById("q6classe").value === classeAttendue;
+  document.getElementById("q6classe").className = classeOk ? "champVerif correct" : "champVerif incorrect";
+  score += classeOk ? 1 : 0;
+
+  document.getElementById("scoreDim").innerHTML = "Score : " + score + " / " + total +
+    (score === total ? " — Bravo, tout est correct !" : " — corrige les cases en rouge, ou vérifie ta méthode.");
+}
+
+function verifierChamp(id, valeurAttendue, tolerance) {
+  var el = document.getElementById(id);
+  var val = parseFloat(el.value);
+  var ok = !isNaN(val) && Math.abs(val - valeurAttendue) <= valeurAttendue * tolerance;
+  el.className = ok ? "champVerif correct" : "champVerif incorrect";
+  return ok ? 1 : 0;
+}
+
+// ============================================================
+// ONGLET 1 — MODE EXPLORATION (curseurs libres)
+// ============================================================
 function calculerDimensionnement() {
   var pertes = parseFloat(document.getElementById("pertes").value) || 0;
   var rendement = (parseFloat(document.getElementById("rendement").value) || 100) / 100;
@@ -145,35 +273,100 @@ function calculerDimensionnement() {
   var surface = parseFloat(document.getElementById("surface").value) || 1;
   var coefPrimaire = parseFloat(document.getElementById("coefPrimaire").value) || 1;
 
-  var energieFinale = pertes / rendement; // kWh de combustible réellement consommé (ce qu'on achète)
-  var masse = energieFinale / pci; // kg
-  var volume = masse / densite; // m3
-  var consoPrimaire = (energieFinale / surface) * coefPrimaire; // kWh/m2/an
+  var energieFinale = pertes / rendement;
+  var masse = energieFinale / pci;
+  var volume = masse / densite;
+  var consoPrimaire = (energieFinale / surface) * coefPrimaire;
   var cls = classeEnergetique(consoPrimaire);
   var seuilBBC = 80;
 
   var html = "";
   html += '<div class="grille">';
-  html += '<div class="resultat"><div class="valeur">' + energieFinale.toFixed(0) + ' kWh</div><div class="label">Énergie finale (combustible réellement consommé, compte tenu du rendement)</div></div>';
-  html += '<div class="resultat"><div class="valeur">' + masse.toFixed(0) + ' kg</div><div class="label">Masse de granulés nécessaire pour l\'année</div></div>';
+  html += '<div class="resultat"><div class="valeur">' + energieFinale.toFixed(0) + ' kWh</div><div class="label">Énergie finale (combustible réellement consommé)</div></div>';
+  html += '<div class="resultat"><div class="valeur">' + masse.toFixed(0) + ' kg</div><div class="label">Masse de granulés nécessaire / an</div></div>';
   html += '<div class="resultat"><div class="valeur">' + volume.toFixed(2) + ' m³</div><div class="label">Volume minimum du silo</div></div>';
-  html += '<div class="resultat"><div class="valeur">' + consoPrimaire.toFixed(1) + ' kWh/m²/an</div><div class="label">Énergie primaire (seuil label BBC : ' + seuilBBC + ')</div></div>';
-  html += '</div>';
-
-  html += '<div class="barreClasse">';
+  html += '<div class="resultat"><div class="valeur">' + consoPrimaire.toFixed(1) + ' kWh/m²/an</div><div class="label">Énergie primaire (seuil BBC : ' + seuilBBC + ')</div></div>';
+  html += '</div><div class="barreClasse">';
   var couleurs = ["#1d9e75","#7cb342","#c8d84a","#e8b93a","#e08a2e","#d9622e","#d64545"];
   ["A","B","C","D","E","F","G"].forEach(function(l, i) { html += '<span style="flex:1;background:' + couleurs[i] + ';">' + l + '</span>'; });
   html += '</div>';
   var pos = (cls.index + 0.5) / cls.total * 100;
   html += '<div class="curseurPos"><span class="fleche" style="left:' + pos + '%;">▲ Classe ' + cls.classe + '</span></div>';
-  html += '<p style="font-size:13px;margin-top:10px;">' + (consoPrimaire <= seuilBBC
-    ? '✓ Sous le seuil BBC (' + seuilBBC + ' kWh/m²/an) — label atteignable, avec ' + (seuilBBC - consoPrimaire).toFixed(1) + ' kWh/m²/an de marge.'
-    : '✗ Au-dessus du seuil BBC (' + seuilBBC + ' kWh/m²/an) — le label n\'est pas atteint dans ces conditions.') + '</p>';
-
   document.getElementById("resultatsDim").innerHTML = html;
 }
 
-function majSchemaFumees(temperature) {
+// ============================================================
+// ONGLET 2 — EXERCICE (tableau à trous, tSortie fixé à 55°C)
+// ============================================================
+var LIGNES_EXERCICE = [
+  { nom: "CO2 (gaz)",         recuperation: "200°C → 55°C",  masse: 2.75, cp: 650,  dTheta: 145, L: null },
+  { nom: "N2 (gaz)",          recuperation: "200°C → 55°C",  masse: 14,   cp: 730,  dTheta: 145, L: null },
+  { nom: "H2O (gaz)",         recuperation: "200°C → 100°C", masse: 2.25, cp: 1410, dTheta: 100, L: null },
+  { nom: "H2O (gaz→liquide)", recuperation: "à 100°C",       masse: 2.25, cp: null, dTheta: null, L: 2.26e6 },
+  { nom: "H2O (liquide)",     recuperation: "100°C → 20°C",  masse: 2.25, cp: 4185, dTheta: 80,  L: null }
+];
+
+function construireTableauExercice() {
+  var corps = document.getElementById("corpsExerciceFumees");
+  corps.innerHTML = "";
+  LIGNES_EXERCICE.forEach(function(l, idx) {
+    var tr = document.createElement("tr");
+    var champDelta = (l.L !== null) ? "—" : '<input type="text" id="dt' + idx + '" inputmode="decimal">';
+    tr.innerHTML =
+      '<td class="constituant">' + l.nom + '</td>' +
+      '<td>' + l.recuperation + '</td>' +
+      '<td>' + l.masse + '</td>' +
+      '<td>' + (l.cp || (l.L ? "L = " + l.L.toExponential(2) : "—")) + '</td>' +
+      '<td>' + champDelta + '</td>' +
+      '<td><input type="text" id="e' + idx + '" inputmode="decimal"></td>';
+    corps.appendChild(tr);
+  });
+}
+
+function verifierFumees() {
+  var score = 0, total = 0;
+  var totalAttendu = 0, totalEleve = 0;
+  LIGNES_EXERCICE.forEach(function(l, idx) {
+    var energieAttendue = (l.L !== null) ? (l.masse * l.L) : (l.masse * l.cp * l.dTheta);
+    var energieAttendueMJ = energieAttendue / 1e6;
+    totalAttendu += energieAttendueMJ;
+
+    if (l.L === null) {
+      total++;
+      var okDt = verifierChamp("dt" + idx, l.dTheta, 0.05);
+      score += okDt;
+    }
+    total++;
+    var elE = document.getElementById("e" + idx);
+    var valE = parseFloat(elE.value);
+    var okE = !isNaN(valE) && Math.abs(valE - energieAttendueMJ) <= Math.max(0.05, energieAttendueMJ * 0.1);
+    elE.className = okE ? "champVerif correct" : "champVerif incorrect";
+    score += okE ? 1 : 0;
+    if (!isNaN(valE)) totalEleve += valE;
+  });
+
+  document.getElementById("scoreFumees").innerHTML =
+    "Score : " + score + " / " + total + " — Total attendu : " + totalAttendu.toFixed(2) + " MJ" +
+    (score === total ? " — Bravo, tout est correct !" : " — corrige les cases en rouge.");
+}
+
+// ============================================================
+// ONGLET 2 — MODE EXPLORATION (curseur température fumées)
+// ============================================================
+function toggleExplorationFumees() {
+  var exo = document.getElementById("fumeesExercice");
+  var exp = document.getElementById("fumeesExploration");
+  var enExploration = exp.className.indexOf("hidden") === -1;
+  exo.className = enExploration ? "" : "hidden";
+  exp.className = enExploration ? "hidden" : "";
+  if (!enExploration) {
+    calculerFumeesExploration();
+  } else {
+    majSchemaFumees(55, true); // retour à l'état de l'exercice
+  }
+}
+
+function majSchemaFumees(temperature, condenseurActif) {
   var label = document.getElementById("labelFumees");
   var fumee = document.getElementById("fumee");
   if (!label || !fumee) return;
@@ -182,25 +375,36 @@ function majSchemaFumees(temperature) {
   label.setAttribute("fill", couleur);
   fumee.setAttribute("stroke", couleur);
   fumee.setAttribute("opacity", temperature >= 150 ? "0.7" : "0.4");
+
+  var actif = !!condenseurActif;
+  var box = document.getElementById("condenseurBox");
+  var lblNom = document.getElementById("labelCondenseur");
+  var lblEtat = document.getElementById("labelCondenseurEtat");
+  var tuyau = document.getElementById("tuyauEvac");
+  var goutteEvac = document.getElementById("goutteEvac");
+  var lblEvac = document.getElementById("labelEvac");
+
+  box.setAttribute("fill", actif ? "#e1eef7" : "#efeee7");
+  box.setAttribute("stroke", actif ? "#378add" : "#c3c2b7");
+  lblNom.setAttribute("fill", actif ? "#215a8f" : "#8a8980");
+  lblEtat.textContent = actif ? "actif — condensation" : "inactif";
+  lblEtat.setAttribute("fill", actif ? "#0f6e56" : "#8a8980");
+  document.querySelectorAll(".goutte").forEach(function(g) { g.setAttribute("opacity", actif ? "0.85" : "0"); });
+  tuyau.setAttribute("opacity", actif ? "0.7" : "0");
+  goutteEvac.setAttribute("opacity", actif ? "0.85" : "0");
+  lblEvac.setAttribute("opacity", actif ? "1" : "0");
 }
 
-function calculerFumees() {
+function calculerFumeesExploration() {
   var tSortie = parseFloat(document.getElementById("tempSortie").value);
   document.getElementById("valTempSortie").textContent = tSortie + " °C";
-  majSchemaFumees(tSortie);
 
-  var condense = tSortie < 100;
-  var gouttes = document.querySelectorAll(".goutte");
-  gouttes.forEach(function(g) { g.setAttribute("opacity", condense ? "0.85" : "0"); });
-  document.getElementById("labelCondenseur").textContent = condense ? "Condensation de l'eau" : "";
-  document.getElementById("labelCondenseur").setAttribute("fill", condense ? "#0f6e56" : "#8a8980");
+  var condense = tSortie <= 100;
+  majSchemaFumees(tSortie, condense);
 
-  // Constituants issus de la combustion de 1 kg de méthane (Document 3)
-  // Chaque ligne se refroidit depuis 200°C (sortie chaudière classique) jusqu'à tSortie.
-  var dThetaGazNeutre = Math.max(0, 200 - tSortie); // CO2 et N2 : simple refroidissement, pas de changement d'état
-  var dThetaH2Ogaz = Math.max(0, 200 - Math.max(tSortie, 100)); // H2O à l'état gaz : de 200°C, jusqu'à 100°C au plus
-  var condense = tSortie <= 100; // la condensation ne se produit que si on descend à 100°C ou en dessous
-  var dThetaH2Oliquide = condense ? 80 : 0; // H2O liquide condensée : refroidit ensuite de 100°C à 20°C avant évacuation (donnée fixe du document)
+  var dThetaGazNeutre = Math.max(0, 200 - tSortie);
+  var dThetaH2Ogaz = Math.max(0, 200 - Math.max(tSortie, 100));
+  var dThetaH2Oliquide = condense ? 80 : 0;
 
   var lignes = [
     { nom: "CO2 (gaz)",         recuperation: "200°C → " + Math.min(tSortie,200).toFixed(0) + "°C", masse: 2.75, cp: 650,  dTheta: dThetaGazNeutre, L: null },
@@ -213,37 +417,33 @@ function calculerFumees() {
   var corps = document.getElementById("corpsTableauFumees");
   corps.innerHTML = "";
   var totalMJ = 0;
-
   lignes.forEach(function(l) {
-    var energie = (l.L !== null) ? (l.masse * l.L) : (l.masse * l.cp * l.dTheta); // J
+    var energie = (l.L !== null) ? (l.masse * l.L) : (l.masse * l.cp * l.dTheta);
     var energieMJ = energie / 1e6;
     totalMJ += energieMJ;
-
     var tr = document.createElement("tr");
     tr.innerHTML =
-      '<td class="constituant">' + l.nom + '</td>' +
-      '<td>' + l.recuperation + '</td>' +
-      '<td>' + l.masse + '</td>' +
-      '<td>' + (l.cp || "—") + '</td>' +
-      '<td>' + (l.cp ? l.dTheta.toFixed(0) : "—") + '</td>' +
-      '<td>' + (l.L ? l.L.toExponential(2) : "—") + '</td>' +
+      '<td class="constituant">' + l.nom + '</td>' + '<td>' + l.recuperation + '</td>' +
+      '<td>' + l.masse + '</td>' + '<td>' + (l.cp || "—") + '</td>' +
+      '<td>' + (l.cp ? l.dTheta.toFixed(0) : "—") + '</td>' + '<td>' + (l.L ? l.L.toExponential(2) : "—") + '</td>' +
       '<td class="cellCalc">' + energieMJ.toFixed(2) + '</td>';
     corps.appendChild(tr);
   });
-
   var trTotal = document.createElement("tr");
   trTotal.className = "totalRow";
   trTotal.innerHTML = '<td colspan="6">Total récupéré</td><td class="cellCalc">' + totalMJ.toFixed(2) + ' MJ</td>';
   corps.appendChild(trTotal);
 
-  var totalKWh = totalMJ / 3.6;
-  var html = '<div class="resultat"><div class="valeur">' + totalMJ.toFixed(2) + ' MJ ≈ ' + totalKWh.toFixed(2) + ' kWh</div><div class="label">Énergie totale récupérable en abaissant les fumées de 200°C à ' + tSortie + '°C, pour 1 kg de méthane brûlé</div></div>';
-  document.getElementById("resultatsFumees").innerHTML = html;
+  document.getElementById("resultatsFumees").innerHTML =
+    '<div class="resultat"><div class="valeur">' + totalMJ.toFixed(2) + ' MJ ≈ ' + (totalMJ/3.6).toFixed(2) + ' kWh</div><div class="label">Énergie totale récupérable pour 1 kg de méthane brûlé</div></div>';
 }
 
-document.querySelectorAll('#blocDim input').forEach(function(el) { el.addEventListener('input', calculerDimensionnement); });
-calculerDimensionnement();
-majSchemaFumees(200);
+// ============================================================
+// INITIALISATION
+// ============================================================
+construireTableauExercice();
+document.getElementById("groupeCondenseur").style.opacity = "0";
+majSchemaFumees(200, false);
 </script>
 </body>
 </html>
