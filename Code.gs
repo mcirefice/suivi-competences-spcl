@@ -139,6 +139,16 @@ function seedReferentiel() {
     ["S&P2", "AE02", "S&P2-06", "Capacité thermique massique d'un corps."],
     ["S&P2", "AE02", "S&P2-07", "Réaliser des calculs simples de calorimétrie."],
     ["S&P2", "AE02", "S&P2-08", "Mener une démarche d'investigation en autonomie (construire un protocole)."],
+    ["S&P3", "Cours", "S&P3-01", "Identifier la fonction globale et les flux de matière, d'énergie et d'informations d'un système de chauffage."],
+    ["S&P3", "AD01", "S&P3-02", "Pouvoir calorifique d'un combustible."],
+    ["S&P3", "AD01", "S&P3-03", "Évaluer la puissance thermique nécessaire au fonctionnement d'une chaudière, avec ou sans changement d'état."],
+    ["S&P3", "AD01", "S&P3-04", "Évaluer, à partir du pouvoir calorifique, le débit de combustible nécessaire au fonctionnement d'une chaudière."],
+    ["S&P2", "AE01", "S&P2-09", "Estimer une incertitude sur une pente d'étalonnage par la méthode du faisceau de droites."],
+    ["S&P3", "Cours", "S&P3-01", "Identifier les flux de matière, d'énergie et d'information d'un système de chauffage."],
+    ["S&P3", "Cours", "S&P3-02", "Pouvoir calorifique d'un combustible."],
+    ["S&P3", "Simulateur chaudière", "S&P3-03", "Évaluer, à partir du pouvoir calorifique, la masse et le volume de combustible nécessaires au fonctionnement d'une chaudière."],
+    ["S&P3", "Simulateur chaudière", "S&P3-04", "Évaluer la puissance thermique nécessaire au fonctionnement d'une chaudière, avec ou sans changement d'état."],
+    ["S&P3", "Cours", "S&P3-05", "Interpréter une classe énergétique (label BBC)."],
   ];
   const existing = sh.getDataRange().getValues().slice(1).map(r => r[2]);
   rows.forEach(r => {
