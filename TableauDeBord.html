@@ -56,6 +56,10 @@
       <label for="chapitreDashboard" style="margin-bottom:4px;">Chapitre</label>
       <select id="chapitreDashboard" onchange="afficherTableau()"></select>
     </div>
+    <a id="lienGoogleSheet" href="#" target="_blank" rel="noopener"
+       style="display:none;background:#0b0b0b;color:#fff;padding:8px 14px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:bold;">
+      Ouvrir le Google Sheet ↗
+    </a>
   </div>
   <div class="carte resumeClasse">
     <div id="resumeZone"></div>
@@ -96,6 +100,11 @@ window.addEventListener("DOMContentLoaded", function() {
     donneesDashboard = res;
     document.getElementById("ecranMdp").classList.add("hidden");
     document.getElementById("contenu").classList.remove("hidden");
+    google.script.run.withSuccessHandler(function(url) {
+      var lien = document.getElementById("lienGoogleSheet");
+      lien.href = url;
+      lien.style.display = "inline-block";
+    }).getUrlFeuilleCalcul();
     var sel = document.getElementById("chapitreDashboard");
     sel.innerHTML = "";
     var selExport = document.getElementById("chapitreExport");

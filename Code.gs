@@ -75,6 +75,10 @@ function getScriptUrl() {
   return ScriptApp.getService().getUrl();
 }
 
+function getUrlFeuilleCalcul() {
+  return SpreadsheetApp.getActiveSpreadsheet().getUrl();
+}
+
 // ---------- Gestion des codes élèves ----------
 
 function genererCodesEleves() {
