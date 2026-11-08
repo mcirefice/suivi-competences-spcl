@@ -43,7 +43,7 @@ function onOpen() {
     .createMenu("Suivi SPCL")
     .addItem("Générer les codes élèves manquants", "genererCodesEleves")
     .addItem("Réinitialiser tous les codes (nouvelle année)", "reinitialiserCodes")
-    .addItem("Initialiser le référentiel (S&P1 + S&P2)", "seedReferentiel")
+    .addItem("Initialiser / mettre à jour le référentiel", "seedReferentiel")
     .addItem("Initialiser la bibliothèque de codes (S&P1 + S&P2)", "seedCodes")
     .addItem("Initialiser les QCM (S&P1 + S&P2)", "seedQCM")
     .addToUi();
@@ -73,10 +73,6 @@ function include(filename, data) {
 
 function getScriptUrl() {
   return ScriptApp.getService().getUrl();
-}
-
-function getUrlFeuilleCalcul() {
-  return SpreadsheetApp.getActiveSpreadsheet().getUrl();
 }
 
 // ---------- Gestion des codes élèves ----------
@@ -126,6 +122,11 @@ function getSheet(name) {
 }
 
 // ---------- Référentiel (pré-remplissage) ----------
+// v2 (08/11/2026) :
+//  - ajout de S&P1-06 et S&P2-09 à S&P2-12 (intitulés = texte exact du BO) ;
+//  - l'ancien S&P2-09 (« faisceau de droites ») est remplacé (le faisceau de droites devient S&P2-11) ;
+//  - suppression du bloc S&P3 en double ;
+//  - le seed MET À JOUR les lignes existantes (intitulé, activité) au lieu de les ignorer.
 
 function seedReferentiel() {
   const sh = getSheet(SHEET_REFERENTIEL);
@@ -135,30 +136,44 @@ function seedReferentiel() {
     ["S&P1", "AE01", "S&P1-03", "Lire une entrée analogique (analogRead)."],
     ["S&P1", "AE02", "S&P1-04", "Numérisation d'une tension : Convertisseur Analogique-Numérique (CAN)."],
     ["S&P1", "AE02", "S&P1-05", "Citer les caractéristiques utiles d'un CAN : nombre de bits, quantum, fréquence d'échantillonnage."],
+    ["S&P1", "AE02", "S&P1-06", "Choisir et utiliser, dans un circuit électrique, les appareils de mesure adaptés."],
     ["S&P2", "AE01", "S&P2-01", "Capteur et conditionneur."],
     ["S&P2", "AE01", "S&P2-02", "Identifier les grandeurs d'entrée et de sortie du capteur et/ou du conditionneur."],
     ["S&P2", "AE01", "S&P2-03", "Utiliser un microcontrôleur pour afficher la valeur de la mesure."],
     ["S&P2", "AE01", "S&P2-04", "Pont diviseur de tension (rappel de 1ère SPCL)."],
     ["S&P2", "AE01", "S&P2-05", "Concevoir et réaliser un conditionneur à partir d'un pont diviseur de tension pour un capteur résistif."],
+    ["S&P2", "AE01", "S&P2-09", "Procéder à une évaluation de type B d'une incertitude-type pour une source d'erreur en exploitant une relation fournie et/ou les notices constructeurs."],
+    ["S&P2", "AE01", "S&P2-11", "Évaluer, à l'aide d'une relation fournie ou d'un logiciel, l'incertitude-type d'une mesure obtenue lors de la réalisation d'un protocole dans lequel interviennent plusieurs sources d'erreurs."],
     ["S&P2", "AE02", "S&P2-06", "Capacité thermique massique d'un corps."],
     ["S&P2", "AE02", "S&P2-07", "Réaliser des calculs simples de calorimétrie."],
     ["S&P2", "AE02", "S&P2-08", "Mener une démarche d'investigation en autonomie (construire un protocole)."],
+    ["S&P2", "AE02", "S&P2-10", "Identifier qualitativement les principales sources d'erreurs lors d'une mesure et comparer leur poids à l'aide d'une méthode fournie."],
+    ["S&P2", "AE02", "S&P2-12", "Valider un résultat en évaluant la différence entre le résultat d'une mesure et la valeur de référence en fonction de l'incertitude-type."],
+    // S&P3 : inchangé pour l'instant, sera revu avec l'activité chaudières.
     ["S&P3", "Cours", "S&P3-01", "Identifier la fonction globale et les flux de matière, d'énergie et d'informations d'un système de chauffage."],
     ["S&P3", "AD01", "S&P3-02", "Pouvoir calorifique d'un combustible."],
     ["S&P3", "AD01", "S&P3-03", "Évaluer la puissance thermique nécessaire au fonctionnement d'une chaudière, avec ou sans changement d'état."],
     ["S&P3", "AD01", "S&P3-04", "Évaluer, à partir du pouvoir calorifique, le débit de combustible nécessaire au fonctionnement d'une chaudière."],
-    ["S&P2", "AE01", "S&P2-09", "Estimer une incertitude sur une pente d'étalonnage par la méthode du faisceau de droites."],
-    ["S&P3", "Cours", "S&P3-01", "Identifier les flux de matière, d'énergie et d'information d'un système de chauffage."],
-    ["S&P3", "Cours", "S&P3-02", "Pouvoir calorifique d'un combustible."],
-    ["S&P3", "Simulateur chaudière", "S&P3-03", "Évaluer, à partir du pouvoir calorifique, la masse et le volume de combustible nécessaires au fonctionnement d'une chaudière."],
-    ["S&P3", "Simulateur chaudière", "S&P3-04", "Évaluer la puissance thermique nécessaire au fonctionnement d'une chaudière, avec ou sans changement d'état."],
-    ["S&P3", "Cours", "S&P3-05", "Interpréter une classe énergétique (label BBC)."],
   ];
-  const existing = sh.getDataRange().getValues().slice(1).map(r => r[2]);
+
+  // Mise à jour des lignes existantes (même code) ou ajout des nouvelles.
+  const data = sh.getDataRange().getValues();
+  const ligneParCode = {};
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][2]) ligneParCode[data[i][2]] = i + 1; // numéro de ligne dans la feuille
+  }
+  let ajoutees = 0, misesAJour = 0;
   rows.forEach(r => {
-    if (!existing.includes(r[2])) sh.appendRow(r);
+    const ligne = ligneParCode[r[2]];
+    if (ligne) {
+      sh.getRange(ligne, 1, 1, 4).setValues([r]);
+      misesAJour++;
+    } else {
+      sh.appendRow(r);
+      ajoutees++;
+    }
   });
-  SpreadsheetApp.getUi().alert("Référentiel initialisé (" + rows.length + " compétences).");
+  SpreadsheetApp.getUi().alert("Référentiel : " + ajoutees + " compétence(s) ajoutée(s), " + misesAJour + " mise(s) à jour.");
 }
 
 function getCodes() {
