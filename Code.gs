@@ -45,7 +45,7 @@ function onOpen() {
     .addItem("Réinitialiser tous les codes (nouvelle année)", "reinitialiserCodes")
     .addItem("Initialiser / mettre à jour le référentiel", "seedReferentiel")
     .addItem("Initialiser la bibliothèque de codes (S&P1 + S&P2)", "seedCodes")
-    .addItem("Initialiser les QCM (S&P1 + S&P2)", "seedQCM")
+    .addItem("Initialiser / mettre à jour les QCM (S&P1 à S&P3)", "seedQCM")
     .addToUi();
 }
 
@@ -149,11 +149,16 @@ function seedReferentiel() {
     ["S&P2", "AE02", "S&P2-08", "Mener une démarche d'investigation en autonomie (construire un protocole)."],
     ["S&P2", "AE02", "S&P2-10", "Identifier qualitativement les principales sources d'erreurs lors d'une mesure et comparer leur poids à l'aide d'une méthode fournie."],
     ["S&P2", "AE02", "S&P2-12", "Valider un résultat en évaluant la différence entre le résultat d'une mesure et la valeur de référence en fonction de l'incertitude-type."],
-    // S&P3 : inchangé pour l'instant, sera revu avec l'activité chaudières.
-    ["S&P3", "Cours", "S&P3-01", "Identifier la fonction globale et les flux de matière, d'énergie et d'informations d'un système de chauffage."],
+    // S&P3 v4 (09/11/2026) : AD01 en classe entière + AE02T chaudière à condensation en TP tournant.
+    // S&P3-05 remplace l'ancien « label BBC » (hors BO).
     ["S&P3", "AD01", "S&P3-02", "Pouvoir calorifique d'un combustible."],
-    ["S&P3", "AD01", "S&P3-03", "Évaluer la puissance thermique nécessaire au fonctionnement d'une chaudière, avec ou sans changement d'état."],
-    ["S&P3", "AD01", "S&P3-04", "Évaluer, à partir du pouvoir calorifique, le débit de combustible nécessaire au fonctionnement d'une chaudière."],
+    ["S&P3", "AD01", "S&P3-04", "Évaluer, à partir du pouvoir calorifique du combustible, le débit de combustible nécessaire au fonctionnement d'une chaudière."],
+    ["S&P3", "AE02T", "S&P3-01", "Identifier la fonction globale réalisée et les flux de matière, d'énergie et d'informations en entrée et en sortie d'un système."],
+    ["S&P3", "AE02T", "S&P3-08", "Identifier les principales performances attendues et les contraintes de sécurité."],
+    ["S&P3", "AE02T", "S&P3-03", "Évaluer la puissance thermique nécessaire au fonctionnement d'une chaudière avec ou sans changement d'état."],
+    ["S&P3", "AE02T", "S&P3-05", "Évaluer la puissance thermique échangée entre deux fluides avec ou sans changement d'état (vaporisation ou condensation)."],
+    ["S&P3", "AE02T", "S&P3-06", "Mettre en œuvre un protocole pour étudier un échange thermique entre deux fluides."],
+    ["S&P3", "AE02T", "S&P3-07", "Exprimer un résultat de mesure avec le nombre de chiffres significatifs adaptés et l'incertitude-type associée, puis le valider en évaluant la différence avec la valeur de référence."],
   ];
 
   // Mise à jour des lignes existantes (même code) ou ajout des nouvelles.
@@ -278,6 +283,22 @@ function seedQCM() {
     ["S&P2", "Sur un graphique d'étalonnage, la méthode du « faisceau de droites » permet de déterminer :",
      "la valeur moyenne uniquement", "un encadrement (min/max) de la pente, donc son incertitude", "le nombre de points de mesure nécessaires", "la température ambiante", "B",
      "En traçant la droite la plus pentue et la moins pentue compatibles avec les rectangles d'incertitude des points extrêmes, on obtient un encadrement [amin ; amax] de la pente réelle — une estimation graphique de l'incertitude, sans aucun calcul.", "Débutant"],
+    // S&P3 (14/11/2026) : AD01 granulés + AE02T chaudière à condensation (TP A).
+    ["S&P3", "Le pouvoir calorifique (PC) d'un combustible est :",
+     "la température de sa flamme", "l'énergie libérée par la combustion de 1 kg (ou 1 m³) de combustible", "la puissance de la chaudière", "la masse de combustible brûlée par heure", "B",
+     "Le PC s'exprime en J.kg⁻¹, kWh.kg⁻¹ ou kWh.m⁻³ (gaz). Pour les granulés de bois, PC ≈ 4,8 kWh.kg⁻¹ : 1 kg de granulés libère 4,8 kWh.", "Débutant"],
+    ["S&P3", "Le rendement η d'une chaudière est égal à :",
+     "P(combustible) / P(utile)", "P(utile) / P(combustible)", "P(utile) × P(combustible)", "P(utile) − P(combustible)", "B",
+     "η = P(utile) / P(combustible). Il est toujours inférieur à 1 (ou 100 %) : une partie de l'énergie du combustible est perdue, surtout dans les fumées.", "Débutant"],
+    ["S&P3", "Dans une chaudière, quel flux est un flux de MATIÈRE en entrée ?",
+     "Le combustible (gaz, granulés) et l'air", "La chaleur cédée à l'eau", "La consigne du thermostat", "L'électricité du circulateur", "A",
+     "Flux de matière : combustible, air, eau froide en entrée ; fumées et eau chaude en sortie. La chaleur et l'électricité sont des flux d'énergie, la consigne est un flux d'information.", "Débutant"],
+    ["S&P3", "Quand la vapeur d'eau se condense en eau liquide, elle :",
+     "absorbe de l'énergie", "libère de l'énergie", "n'échange aucune énergie", "change de masse", "B",
+     "La condensation libère l'énergie Q = m × L (L = chaleur latente de vaporisation, environ 2,26 × 10⁶ J.kg⁻¹ pour l'eau). C'est exactement ce que récupère une chaudière à condensation.", "Débutant"],
+    ["S&P3", "Pourquoi une chaudière à condensation a-t-elle un meilleur rendement qu'une chaudière classique ?",
+     "Elle brûle plus de gaz", "Elle récupère l'énergie de condensation de la vapeur d'eau contenue dans les fumées", "Ses fumées sortent plus chaudes", "Elle n'a pas besoin d'air", "B",
+     "En refroidissant les fumées sous 55-60 °C environ, la vapeur d'eau qu'elles contiennent se condense et cède son énergie à l'eau du circuit. Les fumées sortent froides : moins de pertes.", "Débutant"],
   ];
 
   const avance = [
@@ -311,6 +332,21 @@ function seedQCM() {
     ["S&P2", "Contrairement à la Pt100 (résistance qui augmente avec la température), une thermistance CTN a une résistance qui :",
      "Reste constante", "Augmente aussi avec la température", "Diminue avec la température", "Devient infinie", "C",
      "CTN signifie « Coefficient de Température Négatif » : sa résistance diminue quand la température augmente — un comportement inverse de celui de la Pt100.", "Avancé"],
+    ["S&P3", "Une chaudière à granulés a une puissance utile de 30 kW et un rendement de 80 %. Quelle puissance le combustible doit-il fournir ?",
+     "24 kW", "30 kW", "37,5 kW", "54 kW", "C",
+     "P(combustible) = P(utile) / η = 30 / 0,80 = 37,5 kW. Piège : multiplier par 0,80 donne 24 kW, ce qui voudrait dire que la chaudière produit plus qu'elle ne consomme !", "Avancé"],
+    ["S&P3", "Même chaudière (P(combustible) = 37,5 kW), granulés de PC = 4,8 kWh.kg⁻¹. Quel est le débit massique de granulés ?",
+     "180 kg.h⁻¹", "7,8 kg.h⁻¹", "0,13 kg.h⁻¹", "4,8 kg.h⁻¹", "B",
+     "q(m) = P(combustible) / PC = 37,5 kW / 4,8 kWh.kg⁻¹ ≈ 7,8 kg.h⁻¹. Avec P en kW et PC en kWh.kg⁻¹, le débit sort directement en kg par heure.", "Avancé"],
+    ["S&P3", "Dans le TP A, 7,2 g de vapeur se condensent dans l'eau du calorimètre. Avec L = 2,26 × 10⁶ J.kg⁻¹, quelle énergie a été libérée par la seule condensation ?",
+     "16,3 kJ", "16 300 kJ", "0,31 J", "2,26 kJ", "A",
+     "Q = m × L = 7,2 × 10⁻³ × 2,26 × 10⁶ ≈ 1,63 × 10⁴ J = 16,3 kJ. Attention à convertir la masse en kg.", "Avancé"],
+    ["S&P3", "On mesure L = 2,15 × 10⁶ J.kg⁻¹ avec u(L) = 0,05 × 10⁶ J.kg⁻¹ (référence : 2,26 × 10⁶). Le résultat est-il validé avec le critère |L − L(réf)| / u(L) ≤ 2 ?",
+     "Oui, le quotient vaut 0,22", "Oui, le quotient vaut 2,2", "Non, le quotient vaut 2,2", "Non, le quotient vaut 22", "C",
+     "|2,15 − 2,26| / 0,05 = 0,11 / 0,05 = 2,2 > 2 : le résultat n'est pas validé. Il faut chercher une source d'erreur (pertes thermiques, eau entraînée avec la vapeur…).", "Avancé"],
+    ["S&P3", "Dans le TP A, si de l'eau LIQUIDE chaude arrive dans le calorimètre en plus de la vapeur, la valeur mesurée de L sera :",
+     "trop grande", "trop petite", "inchangée", "négative", "B",
+     "La masse m(v) pesée est attribuée à de la vapeur, alors qu'une partie n'a rien libéré en se condensant : on divise la même énergie par une masse trop grande, donc L est sous-estimée. D'où le piège à eau et le préchauffage.", "Avancé"],
   ];
 
   const existing = sh.getDataRange().getValues().slice(1).map(r => r[1]);

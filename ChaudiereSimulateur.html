@@ -38,7 +38,7 @@
 <?!= include('Banniere.html', {titre: titre}); ?>
 <?!= include('Nav.html', {scriptUrl: scriptUrl, currentPage: currentPage}); ?>
 
-<p style="font-size:13px;color:#52514e;margin-top:-8px;">Aucune chaudière réelle en labo — reprends l'exercice avec ces données, comme sur ton document papier. Le mode exploration (curseurs) n'est là qu'une fois le calcul fait, pour visualiser d'autres cas.</p>
+<p style="font-size:13px;color:#52514e;margin-top:-8px;">Onglet 1 : le CONSTAT sur une chaudière classique (résultats déjà calculés en classe). Onglet 2 : à toi de calculer ce que la condensation permet de récupérer dans les fumées. Le mode exploration (curseurs) sert ensuite à visualiser d'autres cas.</p>
 
 <div class="carte" style="padding:10px 14px;">
 <svg viewBox="0 0 700 340" width="100%" style="max-height:300px;" role="img" aria-label="Schéma de principe d'un chauffage central avec chaudière à granulés de bois et condenseur sur les fumées">
@@ -77,7 +77,9 @@
 <!-- Cheminee / fumees, au dessus du condenseur -->
 <rect x="250" y="35" width="24" height="45" fill="#c9c8bd"/>
 <path id="fumee" d="M262 35 C 255 15, 275 10, 262 -15" stroke="#8a8980" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.6"/>
-<text id="labelFumees" x="262" y="25" text-anchor="middle" font-size="11" font-weight="bold" fill="#a32d2d">200 °C</text>
+<rect x="280" y="8" width="112" height="20" rx="4" fill="#ffffff" stroke="#dcdbd2" stroke-width="1"/>
+<text x="286" y="22" font-size="11" fill="#52514e">Fumées :</text>
+<text id="labelFumees" x="338" y="22" font-size="12" font-weight="bold" fill="#a32d2d">200 °C</text>
 
 <path d="M310 165 L 420 165" stroke="#d64545" stroke-width="3" marker-end="url(#flecheRouge)"/>
 <text x="365" y="155" text-anchor="middle" font-size="11" fill="#a32d2d">Circuit d'eau chaude</text>
@@ -101,8 +103,8 @@
 </div>
 
 <div class="onglets">
-  <button id="ongletDim" class="onglet actif" onclick="afficherOnglet('dim')">Chaudière à granulés</button>
-  <button id="ongletFumees" class="onglet" onclick="afficherOnglet('fumees')">Récupération d'énergie des fumées</button>
+  <button id="ongletDim" class="onglet actif" onclick="afficherOnglet('dim')">1. Chaudière classique (constat)</button>
+  <button id="ongletFumees" class="onglet" onclick="afficherOnglet('fumees')">2. Récupération d'énergie des fumées</button>
 </div>
 
 <!-- ===================== ONGLET 1 : CHAUDIERE A GRANULES ===================== -->
@@ -110,7 +112,7 @@
 
   <div id="dimExercice">
     <div class="donneesFixes">
-      Un propriétaire remplace sa chaudière à fioul par une chaudière à granulés de bois (30 kW, rendement 80%).<br>
+      <b>Rappel de la situation (activité AD01)</b> — Un propriétaire remplace sa chaudière à fioul par une chaudière à granulés de bois (30 kW, rendement 80%).<br>
       <b>Pertes thermiques à compenser :</b> 35 000 kWh/an &middot;
       <b>1 kg de granulés libère :</b> 4,8 kWh &middot;
       <b>Masse volumique des granulés :</b> 650 kg/m³<br>
@@ -119,29 +121,19 @@
       <b>Seuil BBC :</b> 80 kWh/m²/an
     </div>
 
-    <div class="champQuestion">
-      <label for="q3masse">Q3 — Masse de granulés nécessaire pour une année de chauffage (kg)</label>
-      <input type="number" id="q3masse" step="1">
+    <h3 style="margin:4px 0 8px 0;">Constat : ce que consomme et perd la chaudière classique</h3>
+    <div class="grille">
+      <div class="resultat"><div class="valeur">43 750 kWh/an</div><div class="label">Énergie libérée par les granulés (35 000 / 0,80)</div></div>
+      <div class="resultat"><div class="valeur">9 115 kg/an</div><div class="label">Masse de granulés brûlée (≈ 9,1 tonnes)</div></div>
+      <div class="resultat"><div class="valeur">14,0 m³</div><div class="label">Volume minimum du silo</div></div>
+      <div class="resultat"><div class="valeur">75 kWh/m²/an</div><div class="label">Énergie primaire pour le chauffage (classe B)</div></div>
     </div>
-    <div class="champQuestion">
-      <label for="q4volume">Q4 — Volume minimum du silo (m³)</label>
-      <input type="number" id="q4volume" step="0.01">
+    <div class="resultat" style="background:#fbe9e7;margin-top:12px;">
+      <div class="valeur" style="color:#a32d2d;">8 750 kWh/an perdus (20 %)</div>
+      <div class="label">43 750 − 35 000 : cette énergie part surtout avec les fumées, qui sortent à 200 °C. La vapeur d'eau qu'elles contiennent n'est pas condensée : son énergie est perdue.</div>
     </div>
-    <div class="champQuestion">
-      <label for="q6energie">Q6 — Énergie primaire consommée pour le chauffage (kWh/m²/an)</label>
-      <input type="number" id="q6energie" step="0.1">
-    </div>
-    <div class="champQuestion">
-      <label for="q6classe">Quelle classe énergétique (A à G) correspond à cette valeur ?</label>
-      <select id="q6classe">
-        <option value="">—</option>
-        <option>A</option><option>B</option><option>C</option><option>D</option>
-        <option>E</option><option>F</option><option>G</option>
-      </select>
-    </div>
-
-    <button class="principal" onclick="verifierDim()">Vérifier mes réponses</button>
-    <div id="scoreDim" class="scoreBox"></div>
+    <p style="font-size:14px;font-weight:bold;margin:14px 0 4px 0;">➜ Question : combien d'énergie pourrait-on récupérer en refroidissant ces fumées jusqu'à les condenser ? Passe à l'onglet 2.</p>
+    <button class="principal" onclick="afficherOnglet('fumees')" style="margin-top:6px;">Aller à l'onglet 2 — Récupération d'énergie des fumées</button>
     <button class="btnSecondaire" onclick="toggleExplorationDim()" style="margin-top:14px;">Passer en mode exploration (curseurs)</button>
   </div>
 
@@ -160,7 +152,7 @@
       <div><label for="coefPrimaire">Coefficient énergie primaire</label><input type="number" id="coefPrimaire" value="0.6" step="0.05"></div>
     </div>
     <div id="resultatsDim"></div>
-    <button class="btnSecondaire" onclick="toggleExplorationDim()" style="margin-top:14px;">← Revenir à l'exercice</button>
+    <button class="btnSecondaire" onclick="toggleExplorationDim()" style="margin-top:14px;">← Revenir au constat</button>
   </div>
 </div>
 
@@ -169,7 +161,7 @@
 
   <div id="fumeesExercice">
     <div class="donneesFixes">
-      Combustion de <b>1 kg de méthane</b>. Les fumées passent d'une sortie à <b>200°C</b> (chaudière classique) à <b>55°C</b> (chaudière à condensation). L'eau condensée est ensuite évacuée à <b>20°C</b>.<br>
+      Combustion de <b>1 kg de gaz naturel, modélisé par du méthane</b> (PCI = 50,1 MJ.kg⁻¹). Les fumées passent d'une sortie à <b>200°C</b> (chaudière classique) à <b>55°C</b> (chaudière à condensation). L'eau condensée est ensuite évacuée à <b>20°C</b>.<br>
       Rappel : Q = m.Cp.Δθ (sans changement d'état) &nbsp;|&nbsp; Q = m.L (avec changement d'état), L(H2O) = 2,26.10⁶ J.kg⁻¹
     </div>
 
@@ -179,6 +171,7 @@
     </table>
     <button class="principal" onclick="verifierFumees()" style="margin-top:14px;">Vérifier le tableau</button>
     <div id="scoreFumees" class="scoreBox"></div>
+    <div id="impactFumees"></div>
     <button class="btnSecondaire" onclick="toggleExplorationFumees()" style="margin-top:14px;">Passer en mode exploration (curseur)</button>
   </div>
 
@@ -234,7 +227,8 @@ function toggleExplorationDim() {
   if (!enExploration) calculerDimensionnement();
 }
 
-function verifierDim() {
+function verifierDim() { // plus utilisée : l'onglet 1 est un constat (valeurs données)
+  return;
   var pertes = 35000, rendement = 0.8, pci = 4.8, densite = 650, surface = 350, coefPrimaire = 0.6;
   var energieFinale = pertes / rendement;
   var masseAttendue = energieFinale / pci;
@@ -348,6 +342,19 @@ function verifierFumees() {
   document.getElementById("scoreFumees").innerHTML =
     "Score : " + score + " / " + total + " — Total attendu : " + totalAttendu.toFixed(2) + " MJ" +
     (score === total ? " — Bravo, tout est correct !" : " — corrige les cases en rouge.");
+
+  // Impact de la condensation (affiché une fois le tableau entièrement juste)
+  var impact = document.getElementById("impactFumees");
+  if (score !== total) { impact.innerHTML = ""; return; }
+  var part = totalAttendu / 50.1;               // part du PCI récupérée
+  var etaCond = Math.min(0.80 + part, 1.0);      // modèle simple : rendement classique + récupération
+  var masseClassique = 35000 / 0.80 / 4.8, masseCond = 35000 / etaCond / 4.8;
+  impact.innerHTML =
+    '<div class="resultat" style="background:#e3f3ea;margin-top:12px;">' +
+    '<div class="valeur" style="color:#0f6e56;">Impact de la condensation : ≈ ' + (part*100).toFixed(0) + ' % du PCI récupérés</div>' +
+    '<div class="label">Ordre de grandeur (modèle du méthane appliqué à la chaudière de l\'onglet 1) : le rendement passerait de 80 % à environ ' + (etaCond*100).toFixed(0) +
+    ' %, et la consommation de ' + Math.round(masseClassique).toLocaleString("fr-FR") + ' kg à environ ' + (Math.round(masseCond/100)*100).toLocaleString("fr-FR") +
+    ' kg de granulés par an (−' + ((1 - masseCond/masseClassique)*100).toFixed(0) + ' %). La plus grosse part vient de la condensation de la vapeur d\'eau.</div></div>';
 }
 
 // ============================================================
@@ -435,7 +442,7 @@ function calculerFumeesExploration() {
   corps.appendChild(trTotal);
 
   document.getElementById("resultatsFumees").innerHTML =
-    '<div class="resultat"><div class="valeur">' + totalMJ.toFixed(2) + ' MJ ≈ ' + (totalMJ/3.6).toFixed(2) + ' kWh</div><div class="label">Énergie totale récupérable pour 1 kg de méthane brûlé</div></div>';
+    '<div class="resultat"><div class="valeur">' + totalMJ.toFixed(2) + ' MJ ≈ ' + (totalMJ/3.6).toFixed(2) + ' kWh</div><div class="label">Énergie totale récupérable pour 1 kg de gaz naturel (modèle méthane) brûlé</div></div>';
 }
 
 // ============================================================
