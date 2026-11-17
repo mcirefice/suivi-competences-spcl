@@ -75,6 +75,11 @@ function getScriptUrl() {
   return ScriptApp.getService().getUrl();
 }
 
+// Lien vers le Google Sheet de l'application (bouton du tableau de bord professeur).
+function getUrlFeuilleCalcul() {
+  return SpreadsheetApp.getActiveSpreadsheet().getUrl();
+}
+
 // ---------- Gestion des codes élèves ----------
 
 function genererCodesEleves() {
