@@ -44,7 +44,7 @@ function onOpen() {
     .addItem("Générer les codes élèves manquants", "genererCodesEleves")
     .addItem("Réinitialiser tous les codes (nouvelle année)", "reinitialiserCodes")
     .addItem("Initialiser / mettre à jour le référentiel", "seedReferentiel")
-    .addItem("Initialiser la bibliothèque de codes (S&P1 + S&P2)", "seedCodes")
+    .addItem("Initialiser / mettre à jour la bibliothèque de codes (S&P1, S&P2, S&P5)", "seedCodes")
     .addItem("Initialiser / mettre à jour les QCM (S&P1 à S&P3)", "seedQCM")
     .addToUi();
 }
@@ -159,6 +159,13 @@ function seedReferentiel() {
     ["S&P3", "AE02T", "S&P3-05", "Évaluer la puissance thermique échangée entre deux fluides avec ou sans changement d'état (vaporisation ou condensation)."],
     ["S&P3", "AE02T", "S&P3-06", "Mettre en œuvre un protocole pour étudier un échange thermique entre deux fluides."],
     ["S&P3", "AE02T", "S&P3-07", "Exprimer un résultat de mesure avec le nombre de chiffres significatifs adaptés et l'incertitude-type associée, puis le valider en évaluant la différence avec la valeur de référence."],
+    // S&P5 v27 (17/11/2026) : AE01T = TP E moteur pas à pas (TP tournant série 1).
+    ["S&P5", "AE01T", "S&P5-01", "Exploiter des documents permettant de justifier l'avantage et la nécessité de contrôler un système ou un procédé."],
+    ["S&P5", "AE01T", "S&P5-02", "Citer les sources de champ magnétique."],
+    ["S&P5", "AE01T", "S&P5-03", "Citer quelques ordres de grandeur de la valeur du champ magnétique."],
+    ["S&P5", "AE01T", "S&P5-04", "Mettre en évidence l'existence du champ magnétique et déterminer ses caractéristiques (valeur, sens et direction)."],
+    ["S&P5", "AE01T", "S&P5-05", "Expliquer qualitativement le principe de fonctionnement d'un moteur pas à pas."],
+    ["S&P5", "AE01T", "S&P5-06", "Modifier un programme pour piloter un moteur pas à pas à l'aide d'un microcontrôleur."],
   ];
 
   // Mise à jour des lignes existantes (même code) ou ajout des nouvelles.
@@ -209,6 +216,9 @@ function seedCodes() {
     ["S&P2", "Arduino", "Exercice 4 — Voltmètre avec pont diviseur",
      "Affiche sur le moniteur série la tension mesurée en A0, convertie en volts.",
      "const int brochePont = A0;\n\nvoid setup() {\n  Serial.begin(9600);\n}\n\nvoid loop() {\n  int valeurBrute = analogRead(brochePont);\n  float tension = valeurBrute * 5.0 / 1023.0;\n\n  Serial.print(\"Tension : \");\n  Serial.print(tension);\n  Serial.println(\" V\");\n\n  delay(500);\n}"],
+    ["S&P5", "Arduino", "TP E — Contrôler la position du moteur pas à pas",
+     "Moteur 28BYJ-48 + carte ULN2003. Moniteur série 9600 bauds, réglage « Nouvelle ligne » : + / - / 1 / -1 pour régler le zéro, Z pour le mémoriser, un nombre de pas pour tourner, R pour revenir au zéro.",
+     "// S&P5 – AE 01T – Contrôler la position d'un moteur pas à pas (28BYJ-48 + carte ULN2003)\n// Câblage : IN1 -> broche 2, IN2 -> broche 3, IN3 -> broche 4, IN4 -> broche 5\n// Moniteur série : 9600 bauds, réglage « Nouvelle ligne » (en bas à droite).\n//\n// Commandes à taper puis Entrée :\n//   +      : avance de 10 pas (réglage grossier du zéro, 1,8°)\n//   -      : recule de 10 pas (réglage grossier du zéro, 1,8°)\n//   1, -1  : un petit nombre = réglage fin (1 pas = 0,18°)\n//   Z      : la position actuelle devient le zéro (0° face au repère)\n//   512    : un nombre = tourner de ce nombre de pas (négatif = autre sens)\n//   R      : retour à la position initiale (zéro)\n\n#include <Stepper.h>\n\nconst int NbreDePasPourUnTour = 2048;          // 32 pas du rotor x réduction 64\nconst int SENS = -1;                           // mettre 1 si le disque tourne dans le mauvais sens\n\n// La bibliothèque Stepper attend l'ordre IN1, IN3, IN2, IN4 (ici : 3, 5, 4, 2)\nStepper myStepper(NbreDePasPourUnTour, 3, 5, 4, 2);\n\nlong Position = 0;                             // position actuelle en pas (0 = repère)\n\nvoid tourner(long NbreDePas) {\n  myStepper.step(SENS * NbreDePas);\n  Position = Position + NbreDePas;\n  couperBobines();                             // évite que le moteur chauffe à l'arrêt\n  afficherPosition();\n}\n\nvoid couperBobines() {\n  for (int broche = 2; broche <= 5; broche++) digitalWrite(broche, LOW);\n}\n\nvoid afficherPosition() {\n  Serial.print(\"Position : \");\n  Serial.print(Position);\n  Serial.print(\" pas, soit \");\n  Serial.print(Position * 360.0 / NbreDePasPourUnTour, 1);\n  Serial.println(\" degres\");\n}\n\nvoid setup() {\n  myStepper.setSpeed(10);                      // vitesse en tours par minute\n  Serial.begin(9600);\n  couperBobines();\n  Serial.println(\"Reglage du zero : + ou - (1,8 deg), puis 1 ou -1 (0,18 deg) pour finir, puis Z.\");\n  Serial.println(\"Ensuite : un nombre de pas pour tourner, R pour revenir au zero.\");\n}\n\nvoid loop() {\n  if (Serial.available() > 0) {\n    String commande = Serial.readStringUntil('\\n');\n    commande.trim();\n\n    if (commande == \"+\") {\n      tourner(10);\n    }\n    else if (commande == \"-\") {\n      tourner(-10);\n    }\n    else if (commande == \"Z\" || commande == \"z\") {\n      Position = 0;\n      Serial.println(\"Zero memorise.\");\n      afficherPosition();\n    }\n    else if (commande == \"R\" || commande == \"r\") {\n      tourner(-Position);                      // revient exactement au zéro\n    }\n    else if (commande.toInt() != 0) {\n      tourner(commande.toInt());\n    }\n  }\n}\n"],
   ];
   const existing = sh.getDataRange().getValues().slice(1).map(r => r[2]);
   rows.forEach(r => {
